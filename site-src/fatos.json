@@ -1,0 +1,45 @@
+{
+  "_leia": "Fonte única dos fatos do site. Mude aqui e rode: python3 site-src/build.py. Nunca edite o HTML de site/ na mão.",
+  "dominio": "https://estanciasafra.com.br",
+  "nome": "Estância São Francisco de Assis",
+  "marca": "Safra",
+  "cidade": "Lindóia do Sul",
+  "uf": "SC",
+  "whatsapp": "5549998094689",
+  "whatsapp_definitivo": false,
+  "ga4_id": "G-EWY218YNBN",
+  "perfil_google": "https://share.google/6mi5N8JCMUcQG9Dzw",
+  "atualizado_em": "2026-11-12",
+  "avaliacoes_google": {
+    "nota": 5.0,
+    "total": 3,
+    "conferido_em": "2026-11-12"
+  },
+  "raio_km": 60,
+  "silagem": {
+    "toneladas": 1400,
+    "preco_tonelada": 500
+  },
+  "presecado": {
+    "preco_bola": 400,
+    "peso_bola_kg": 400,
+    "variacao_kg": 50
+  },
+  "bromatologico_publicado": false,
+  "cidades_proximas": [
+    "Concórdia",
+    "Ipumirim",
+    "Irani",
+    "Arabutã",
+    "Seara",
+    "Xavantina",
+    "Jaborá",
+    "Catanduvas"
+  ],
+  "verificacao": {
+    "google_meta": "io11H4tiDYqsJXDXOHDfHqpPNvwFiO9m0HXK60f0SRk",
+    "google_arquivo": "google5035a7835995c402.html",
+    "bing": "E2D46E57E4CB8703203C9960DA170C73",
+    "indexnow_chave": "d53fef7814b6c31c8dba1b5e69088ef5"
+  }
+}

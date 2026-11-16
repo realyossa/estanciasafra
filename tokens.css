@@ -1,0 +1,24 @@
+/* Safra · Estância São Francisco de Assis — tokens da marca */
+@import url("https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap");
+
+:root {
+  /* cores da marca */
+  --safra-verde: #0F6B3C;          /* faixa, moldura, títulos */
+  --safra-verde-profundo: #0B4D2D; /* interior do losango, fundos escuros */
+  --safra-verde-sombra: #07361F;   /* dobras da faixa, hover escuro */
+  --safra-vermelho: #C8202F;       /* acento: filetes e detalhes, nunca texto corrido */
+  --safra-preto: #121413;          /* pelagem da vaca */
+  --safra-carvao: #2F3A36;         /* texto */
+  --safra-branco: #FFFFFF;
+
+  /* apoio sugerido (não está na placa) */
+  --safra-leite: #F7F5EF;          /* fundo de página */
+  --safra-pasto: #E4EEE7;          /* superfícies claras, 10% de verde */
+  --safra-cinza: #7C8782;          /* texto secundário */
+
+  /* tipografia */
+  --safra-fonte: "PT Sans", "Myriad Pro", "Frutiger", "Segoe UI", sans-serif;
+  --safra-peso-texto: 400;
+  --safra-peso-titulo: 700;
+  --safra-tracking-caixa-alta: 0.08em; /* como em SAFRA */
+}

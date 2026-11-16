@@ -1,0 +1,48 @@
+# IndexNow: depois que o SeeDropHost publica, avisa Bing (e Yandex, Seznam, Naver...) das URLs do sitemap.
+# O plano Grátis do SeeDropHost não faz isso sozinho; este fluxo faz. A chave fica em site-src/fatos.json
+# (verificacao.indexnow_chave) e o build.py grava o arquivo /<chave>.txt na raiz do site.
+name: "IndexNow (estanciasafra)"
+
+on:
+  workflow_run:
+    workflows: ["SeeDropHost (estanciasafra)"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  avisar:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Avisar o IndexNow
+        shell: bash
+        run: |
+          set -euo pipefail
+          dominio=$(jq -r '.dominio' site-src/fatos.json | sed 's:/*$::')
+          host=${dominio#https://}
+          chave=$(jq -r '.verificacao.indexnow_chave // empty' site-src/fatos.json)
+          [ -n "$chave" ] || { echo "::warning::sem verificacao.indexnow_chave em fatos.json"; exit 0; }
+
+          # espera a versão nova responder com a chave (o CDN pode levar alguns segundos)
+          for i in 1 2 3 4 5 6; do
+            if [ "$(curl -fsS "$dominio/$chave.txt" || true)" = "$chave" ]; then ok=1; break; fi
+            sleep 10
+          done
+          [ "${ok:-}" = 1 ] || { echo "::error::$dominio/$chave.txt não respondeu com a chave"; exit 1; }
+
+          urls=$(curl -fsS "$dominio/sitemap.xml" | grep -o '<loc>[^<]*</loc>' | sed 's:<loc>\(.*\)</loc>:\1:' | jq -R . | jq -s .)
+          corpo=$(jq -n --arg host "$host" --arg key "$chave" --arg loc "$dominio/$chave.txt" --argjson urls "$urls" \
+            '{host:$host, key:$key, keyLocation:$loc, urlList:$urls}')
+          codigo=$(curl -sS -o resposta.txt -w '%{http_code}' -X POST "https://api.indexnow.org/indexnow" \
+            -H 'content-type: application/json; charset=utf-8' --data "$corpo")
+          echo "IndexNow respondeu HTTP $codigo para $(echo "$urls" | jq length) URL(s)"
+          { echo "### IndexNow"; echo "- HTTP $codigo"; echo "$urls" | jq -r '.[] | "- \(.)"'; } >> "$GITHUB_STEP_SUMMARY"
+          case "$codigo" in 200|202) ;; *) cat resposta.txt; exit 1 ;; esac

@@ -1,0 +1,11 @@
+# gerado pelo build (o GitHub Actions gera de novo a cada push)
+site/
+*.zip
+.DS_Store
+.claude/
+
+# arquivos da marca guardados só no iCloud (não entram no build)
+Safra - Identidade de Marca.pdf
+kit-da-marca.html
+referencia/
+site-src/originais/
