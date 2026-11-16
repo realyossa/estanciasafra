@@ -10,11 +10,11 @@ Site gerado por `site-src/build.py` a partir de `site-src/fatos.json` (fonte ún
 
 ## Medição e buscadores
 - Google Analytics 4: conta "Estância Safra", propriedade "estanciasafra.com.br", ID `G-EWY218YNBN`.
-- Google Search Console: propriedade `https://estanciasafra.com.br/` (meta tag + arquivo `google5035a7835995c402.html`).
+- Google Search Console: propriedade `https://estanciasafra.com.br/` (meta tag + Google Analytics).
 - Bing Webmaster Tools: `https://estanciasafra.com.br/` (meta `msvalidate.01` + `BingSiteAuth.xml`).
 - IndexNow: chave em `fatos.json` → `verificacao.indexnow_chave`, arquivo `/<chave>.txt`.
 
 ## Depois do primeiro push (uma vez só)
-- Search Console: abrir a propriedade e clicar em **Verificar**; depois enviar `sitemap.xml`.
-- Bing Webmaster: abrir o site, **Verify** (meta tag); depois enviar `sitemap.xml`.
+- Search Console: verificada (meta tag + GA) e `sitemap.xml` enviado.
+- Bing Webmaster: verificado (`BingSiteAuth.xml`) e `sitemap.xml` enviado.
 - GA4: em Administrador › Eventos, marcar `generate_lead` como evento principal quando ele aparecer.
