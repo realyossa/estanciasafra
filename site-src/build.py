@@ -59,9 +59,15 @@ def wa(msg, origem, rotulo, classe="bt"):
             f'href="https://wa.me/{ZAP}?text={quote(msg)}">{rotulo}</a>')
 
 
-def img(nome, alt, w=720, h=1280, lazy=True, extra=""):
+TAM_PADRAO = "(min-width:901px) 50vw, 100vw"
+
+
+def img(nome, alt, w=720, h=1280, lazy=True, extra="", sizes=TAM_PADRAO):
     l = ' loading="lazy" decoding="async"' if lazy else ' fetchpriority="high"'
-    return f'<img src="/fotos/{nome}.webp" alt="{escape(alt)}" width="{w}" height="{h}"{l}{extra}>'
+    # versões menores geradas em site-src/fotos (nome-360.webp, nome-540.webp, nome-640.webp)
+    var = [(int(m), f"/fotos/{nome}-{m}.webp") for m in ("360", "540", "640") if (SRC / "fotos" / f"{nome}-{m}.webp").exists()]
+    ss = (f' srcset="{", ".join(f"{u} {m}w" for m, u in var)}, /fotos/{nome}.webp {w}w" sizes="{sizes}"') if var else ""
+    return f'<img src="/fotos/{nome}.webp"{ss} alt="{escape(alt)}" width="{w}" height="{h}"{l}{extra}>'
 
 
 NAV = [("/silagem-de-milho/", "Silagem de milho"), ("/pre-secado-de-azevem/", "Pré-secado de azevém"),
@@ -106,8 +112,13 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
     url = f"{DOM}{caminho}"
     atual = ' aria-current="page"'
     nav = "".join(f'<a href="{h}"{atual if h == caminho else ""}>{t}</a>' for h, t in NAV)
-    mh = re.search(r'<img src="([^"]+)"[^>]*fetchpriority="high"', corpo)
-    pre = f'<link rel="preload" as="image" href="{mh.group(1)}" fetchpriority="high">\n' if mh else ""
+    mh = re.search(r'<img src="([^"]+)"(?: srcset="([^"]+)" sizes="([^"]+)")?[^>]*fetchpriority="high"', corpo)
+    pre = ""
+    if mh:
+        resp = f' imagesrcset="{mh.group(2)}" imagesizes="{mh.group(3)}"' if mh.group(2) else ""
+        pre = f'<link rel="preload" as="image" href="{mh.group(1)}"{resp} fetchpriority="high">\n'
+    pre += ('<link rel="preload" as="font" type="font/woff2" href="/assets/pt-sans-400.woff2" crossorigin>\n'
+            '<link rel="preload" as="font" type="font/woff2" href="/assets/pt-sans-700.woff2" crossorigin>\n')
     gid = F.get("ga4_id", "")
     ga = (f'<script async src="https://www.googletagmanager.com/gtag/js?id={gid}"></script>\n'
           f'<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag("js",new Date());gtag("config","{gid}")</script>\n') if gid else ""
@@ -155,9 +166,6 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
 <script>document.documentElement.classList.add("js")</script>
 {pre}{ga}<link rel="icon" href="/assets/safra-icone.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/safra-icone.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap">
 <link rel="stylesheet" href="/assets/site.css?v={VER}">
 <script type="application/ld+json">{ld}</script>
 </head>
@@ -252,12 +260,12 @@ home = f"""
 <p class="rot">Os dois volumosos</p>
 <h2>Escolha o que a sua dieta precisa</h2>
 <div class="duas">
-<article class="cartao"><div class="foto">{img("silagem-face-detalhe", "Face do silo aberta mostrando a silagem de milho picada e compactada")}</div>
+<article class="cartao"><div class="foto">{img("silagem-face-detalhe", "Face do silo aberta mostrando a silagem de milho picada e compactada", sizes="(min-width:901px) 540px, 100vw")}</div>
 <div class="corpo"><h3><a href="/silagem-de-milho/">Silagem de milho</a></h3>
 <p class="preco">R$ {PT} <small>por tonelada · R$ {PKG} o kg</small></p>
 <p>{T} toneladas em silos trincheira cobertos com lona e sacos de peso. Vendida por tonelada, na quantidade que você precisar.</p>
 <a class="bt" href="/silagem-de-milho/">Ver a silagem de milho</a></div></article>
-<article class="cartao"><div class="foto">{img("bolas-pre-secado", "Bolas de pré-secado de azevém embaladas em filme branco, armazenadas entre muros de tijolo")}</div>
+<article class="cartao"><div class="foto">{img("bolas-pre-secado", "Bolas de pré-secado de azevém embaladas em filme branco, armazenadas entre muros de tijolo", sizes="(min-width:901px) 540px, 100vw")}</div>
 <div class="corpo"><h3><a href="/pre-secado-de-azevem/">Pré-secado de azevém</a></h3>
 <p class="preco">R$ {PB} <small>por bola de cerca de {KG} kg</small></p>
 <p>Bolas embaladas em filme, com peso entre {KMIN} e {KMAX} kg. Vendidas por unidade: leve uma, dez ou a carga fechada.</p>
@@ -279,13 +287,13 @@ home = f"""
 <p class="lead">Todas as fotos desta página foram feitas na estância em novembro de 2026.</p>
 <div class="galeria mosaico">
 <figure>{img("silo-lona-araucaria", "Silo trincheira coberto com lona branca, com araucária ao fundo")}<figcaption>Silo coberto, com a araucária ao fundo</figcaption></figure>
-<figure>{img("silo-trincheira-lateral", "Lateral de um silo trincheira com muro de tijolo e lona presa por sacos")}<figcaption>Silo trincheira com muro de tijolo</figcaption></figure>
-<figure>{img("lona-sacos-araucaria", "Lona branca do silo presa por fileiras de sacos, com uma araucária ao fundo")}<figcaption>Lona vedada com fileiras de sacos</figcaption></figure>
-<figure>{img("silagem-face-parede", "Silagem de milho compactada junto à parede do silo")}<figcaption>Silagem compactada junto à parede</figcaption></figure>
-<figure>{img("silos-vista-vale", "Dois silos trincheira cobertos, lado a lado, com pasto ao fundo")}<figcaption>Dois silos lado a lado</figcaption></figure>
+<figure>{img("silo-trincheira-lateral", "Lateral de um silo trincheira com muro de tijolo e lona presa por sacos", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Silo trincheira com muro de tijolo</figcaption></figure>
+<figure>{img("lona-sacos-araucaria", "Lona branca do silo presa por fileiras de sacos, com uma araucária ao fundo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Lona vedada com fileiras de sacos</figcaption></figure>
+<figure>{img("silagem-face-parede", "Silagem de milho compactada junto à parede do silo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Silagem compactada junto à parede</figcaption></figure>
+<figure>{img("silos-vista-vale", "Dois silos trincheira cobertos, lado a lado, com pasto ao fundo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Dois silos lado a lado</figcaption></figure>
 </div></div></section>
 
-<div class="faixa-foto">{img("lona-silos-graneleiros", "")}
+<div class="faixa-foto">{img("lona-silos-graneleiros", "", sizes="100vw")}
 <div class="wrap"><p class="rot">Nosso jeito de vender</p>
 <h2>O que está no site é o que você encontra na estância</h2>
 <div class="tres">
@@ -301,8 +309,8 @@ home = f"""
 {chamada("Precisa de volumoso perto de " + CID + "?", f"Atendemos {CID_TXT} e outros municípios num raio de cerca de {RAIO} km.", msg_home, "chamada-home")}
 """
 NEGOCIO_HOME = {**NEGOCIO, "knowsAbout": ["silagem de milho", "pré-secado de azevém", "volumoso para gado"],
-                "makesOffer": [{"@type": "Offer", "itemOffered": {"@type": "Product", "@id": f"{DOM}/silagem-de-milho/#produto", "name": "Silagem de milho"}, "price": S["preco_tonelada"], "priceCurrency": "BRL"},
-                               {"@type": "Offer", "itemOffered": {"@type": "Product", "@id": f"{DOM}/pre-secado-de-azevem/#produto", "name": "Pré-secado de azevém em bola"}, "price": P["preco_bola"], "priceCurrency": "BRL"}]}
+                "makesOffer": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL"},
+                               {"@type": "Offer", "itemOffered": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "price": P["preco_bola"], "priceCurrency": "BRL"}]}
 pagina("/", f"Silagem de milho à venda em {LOCAL} | Estância Safra",
        f"{T} toneladas de silagem de milho a R$ {PT} a tonelada e pré-secado de azevém a R$ {PB} a bola. Retirada em {LOCAL}. Chame no WhatsApp.",
        home, [NEGOCIO_HOME, LD_HOME, {"@type": "WebSite", "@id": f"{DOM}/#site", "url": f"{DOM}/", "name": "Estância Safra",
@@ -388,10 +396,10 @@ sil = f"""
 <p>Na retirada, o carregamento é feito direto da face do silo para o seu caminhão. Vale combinar o transporte para que a silagem chegue e seja usada ou reensilada o quanto antes: silagem exposta ao ar perde qualidade.</p></div>
 </div>
 <div class="galeria" style="margin-top:20px">
-<figure>{img("silo-coberto-eucaliptos", "Silo trincheira coberto visto de frente, com eucaliptos ao fundo")}<figcaption>Silo coberto, visto de frente</figcaption></figure>
-<figure>{img("silagem-face-parede", "Silagem de milho compactada junto à parede do silo")}<figcaption>Face do silo junto à parede</figcaption></figure>
-<figure>{img("lona-silos-graneleiros", "Lona do silo com sacos de peso e silos metálicos ao fundo")}<figcaption>Cobertura com lona e sacos</figcaption></figure>
-<figure>{img("silo-trincheira-lateral", "Lateral do silo trincheira com muro de tijolo")}<figcaption>Muro lateral do silo</figcaption></figure>
+<figure>{img("silo-coberto-eucaliptos", "Silo trincheira coberto visto de frente, com eucaliptos ao fundo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Silo coberto, visto de frente</figcaption></figure>
+<figure>{img("silagem-face-parede", "Silagem de milho compactada junto à parede do silo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Face do silo junto à parede</figcaption></figure>
+<figure>{img("lona-silos-graneleiros", "Lona do silo com sacos de peso e silos metálicos ao fundo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Cobertura com lona e sacos</figcaption></figure>
+<figure>{img("silo-trincheira-lateral", "Lateral do silo trincheira com muro de tijolo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Muro lateral do silo</figcaption></figure>
 </div>
 </div></section>
 
@@ -600,6 +608,8 @@ pagina("/404.html", "Página não encontrada | Estância Safra", "Esta página n
 (OUT / "assets").mkdir(parents=True, exist_ok=True)
 for f in ("site.css", "site.js"):
     shutil.copyfile(SRC / f, OUT / "assets" / f)
+for f in (SRC / "fontes").glob("*.woff2"):
+    shutil.copyfile(f, OUT / "assets" / f.name)
 LOGO = SRC.parent / "logo"
 for f in ("safra-horizontal.svg", "safra-emblema-negativo.svg", "safra-icone.svg"):
     shutil.copyfile(LOGO / f, OUT / "assets" / f)
