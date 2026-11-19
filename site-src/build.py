@@ -19,6 +19,12 @@ RAIO = F["raio_km"]
 MESES = "janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro".split()
 a, m, d = F["atualizado_em"].split("-")
 DATA = f"{int(d)} de {MESES[int(m)-1]} de {a}"
+
+
+def data_br(iso):
+    aa, mm, dd = iso.split("-")
+    return f"{int(dd)} de {MESES[int(mm)-1]} de {aa}"
+
 MESANO = f"{MESES[int(m)-1]} de {a}"
 
 
@@ -190,7 +196,8 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
 <div><b>Atendimento</b><ul>
 <li><a href="/regiao/">Região e retirada</a></li>
 <li><a href="/contato/">Contato e pedido</a></li>
-<li><a href="{F['perfil_google']}" rel="noopener">Ver a estância no Google</a></li></ul></div>
+<li><a href="{F['perfil_google']}" rel="noopener">Ver a estância no Google</a></li>
+<li><a href="/privacidade/">Política de privacidade</a></li></ul></div>
 </div></footer>
 <div class="barra"><span>{barra_txt}</span>{wa(barra_msg, "barra-celular", "Chamar no WhatsApp", "bt claro pq")}</div>
 <script src="/assets/site.js?v={VER}" defer></script>
@@ -598,6 +605,57 @@ pagina("/contato/", "Contato e pedido pelo WhatsApp | Estância Safra",
        f"Peça silagem de milho ou pré-secado de azevém direto à {NOME}, em {LOCAL}, pelo WhatsApp. Diga produto, quantidade e cidade.",
        con, [NEGOCIO, migalha("Contato", "/contato/")], msg_con, "Fale direto com a estância")
 
+# ---------------------------------------------------------------- PRIVACIDADE
+DOC = F.get("documento", "")   # CNPJ ou CPF do responsável, se o dono quiser mostrar
+EMAIL = F.get("email", "")
+contato_priv = (f'pelo WhatsApp (botões deste site)' + (f' ou pelo e-mail <a href="mailto:{EMAIL}">{EMAIL}</a>' if EMAIL else ""))
+priv = f"""<section class="fim"><div class="wrap texto">
+<p class="migalha"><a href="/">Início</a> › Privacidade</p>
+<p class="rot">Lei Geral de Proteção de Dados (LGPD)</p>
+<h1 class="h1-claro">Política de privacidade</h1>
+<p class="lead">Este site serve para mostrar preço, estoque e fotos da silagem e do pré-secado da {NOME}, em {LOCAL}. Ele não tem cadastro, login nem pagamento, e não guarda o que você digita. Aqui está, em linguagem simples, o que acontece com os seus dados.</p>
+<p>Versão de <time datetime="{F['privacidade_em']}">{data_br(F['privacidade_em'])}</time>.</p>
+
+<h2>Quem é o responsável</h2>
+<p>{NOME} ({MARCA}), {CID}, Santa Catarina, Brasil{f", {DOC}" if DOC else ""}. É quem decide como os dados deste site são usados (controlador, na LGPD). Contato para qualquer assunto de privacidade: {contato_priv}.</p>
+
+<h2>O que coletamos e para quê</h2>
+<h3>1. Estatísticas de visita (Google Analytics 4)</h3>
+<p>Usamos o Google Analytics 4 para saber quantas pessoas visitam o site, de quais cidades e aparelhos vêm, quais páginas leem e quais botões do WhatsApp clicam. Isso nos diz se o site está ajudando quem procura volumoso. O Google Analytics grava cookies no seu navegador (como <code>_ga</code>) e recebe dados técnicos da visita: páginas vistas, tipo de aparelho e navegador, região aproximada e origem do acesso. Não enviamos ao Google o seu nome, telefone nem o texto das mensagens.</p>
+<p>Base legal: legítimo interesse em medir e melhorar o site (art. 7º, IX, da LGPD).</p>
+
+<h3>2. Pedidos pelo WhatsApp</h3>
+<p>Os botões "Chamar no WhatsApp", a calculadora e o formulário de pedido só montam uma mensagem e abrem o seu WhatsApp. O site não guarda nada do que você digita. Se você enviar a mensagem, recebemos o que você escreveu e o seu número de telefone, e usamos isso apenas para responder, confirmar estoque e preço e combinar a retirada.</p>
+<p>Base legal: procedimentos para a venda que você pediu (art. 7º, V, da LGPD). A conversa passa pelo WhatsApp, que segue a política de privacidade da própria empresa (Meta).</p>
+
+<h3>3. Hospedagem</h3>
+<p>Como em qualquer site, o servidor que hospeda estas páginas recebe dados técnicos de cada acesso, como endereço IP, navegador e horário, para entregar as páginas e proteger o site contra abuso.</p>
+
+<h2>O que não fazemos</h2>
+<ul>
+<li>Não vendemos nem alugamos dados de ninguém.</li>
+<li>Não usamos pixel de anúncios nem remarketing.</li>
+<li>Não pedimos CPF, endereço nem dados de pagamento pelo site.</li>
+<li>As fontes e as fotos são servidas pelo próprio site, sem rastreio de terceiros.</li>
+</ul>
+
+<h2>Por quanto tempo guardamos</h2>
+<p>Os dados do Google Analytics ficam guardados pelo prazo de retenção configurado na conta (no máximo 14 meses) e depois são apagados pelo Google. As conversas de WhatsApp ficam com a gente enquanto forem úteis para atender você e cumprir obrigações legais da venda.</p>
+
+<h2>Como recusar a medição</h2>
+<p>Você pode bloquear ou apagar cookies nas configurações do seu navegador, usar a navegação anônima ou instalar o <a href="https://tools.google.com/dlpage/gaoptout?hl=pt-BR" rel="noopener">complemento de desativação do Google Analytics</a>. O site continua funcionando normalmente.</p>
+
+<h2>Seus direitos</h2>
+<p>Pela LGPD (art. 18), você pode pedir a qualquer momento: confirmação de que tratamos seus dados, acesso a eles, correção, anonimização ou eliminação do que for desnecessário, informação sobre com quem compartilhamos e revisão do consentimento quando ele for a base. Peça {contato_priv}. Se não ficar satisfeito, você pode reclamar à Autoridade Nacional de Proteção de Dados (<a href="https://www.gov.br/anpd/" rel="noopener">ANPD</a>).</p>
+
+<h2>Mudanças nesta política</h2>
+<p>Se mudarmos o que o site coleta, esta página será atualizada e a data no topo mudará.</p>
+<p style="margin-top:28px"><a class="bt" href="/">Voltar ao início</a></p>
+</div></section>"""
+pagina("/privacidade/", "Política de privacidade | Estância Safra",
+       f"Como o site da {NOME} ({MARCA}) usa dados: Google Analytics, pedidos pelo WhatsApp e seus direitos pela LGPD.",
+       priv, [NEGOCIO, migalha("Privacidade", "/privacidade/")], msg_home, "Silagem e pré-secado à venda")
+
 # ---------------------------------------------------------------- 404
 pagina("/404.html", "Página não encontrada | Estância Safra", "Esta página não existe. Veja a silagem de milho e o pré-secado de azevém à venda.",
        f"""<section class="fim"><div class="wrap"><p class="rot">Erro 404</p><h1 class="h1-claro">Esta página não existe</h1>
@@ -621,7 +679,7 @@ for f in (SRC / "fotos").iterdir():
     if not alvo.exists() or alvo.stat().st_size != f.stat().st_size:
         shutil.copyfile(f, alvo)
 
-urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/regiao/", "/contato/"]
+urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/regiao/", "/contato/", "/privacidade/"]
 
 
 def imgs_da(u):
@@ -651,6 +709,7 @@ def imgs_da(u):
 - [Pré-secado de azevém]({DOM}/pre-secado-de-azevem/): preço por bola e por quilo, peso, vídeo, comparação com a silagem.
 - [Região e retirada]({DOM}/regiao/): municípios próximos e como funciona a retirada.
 - [Contato]({DOM}/contato/): pedido pelo WhatsApp.
+- [Política de privacidade]({DOM}/privacidade/): o que o site coleta (Google Analytics) e direitos pela LGPD.
 """, encoding="utf-8")
 
 # verificação de Search Console, Bing e chave do IndexNow (arquivos na raiz)
