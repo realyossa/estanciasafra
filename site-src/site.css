@@ -244,3 +244,4 @@ footer.rod .prova .estrelas{display:block;font-size:17px;margin-bottom:2px}
 .texto p,.texto li{margin-bottom:12px}
 .texto ul{padding-left:22px;margin-bottom:12px}
 .texto code{font-size:.9em;background:var(--pasto);padding:1px 5px;border-radius:4px}
+.fontes{padding-left:22px;font-size:16px}.fontes li{margin-bottom:8px}.fontes a{color:var(--verde)}

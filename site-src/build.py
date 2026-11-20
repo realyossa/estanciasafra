@@ -114,7 +114,7 @@ VERIF = ((f'<meta name="google-site-verification" content="{V["google_meta"]}">\
          (f'<meta name="msvalidate.01" content="{V["bing"]}">\n' if V.get("bing") else ""))
 
 
-def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"):
+def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg", extra=None):
     url = f"{DOM}{caminho}"
     atual = ' aria-current="page"'
     nav = "".join(f'<a href="{h}"{atual if h == caminho else ""}>{t}</a>' for h, t in NAV)
@@ -136,7 +136,7 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
             "inLanguage": "pt-BR", "isPartOf": {"@id": f"{DOM}/#site"}, "about": {"@id": f"{DOM}/#estancia"},
             "publisher": {"@id": f"{DOM}/#estancia"}, "dateModified": F["atualizado_em"],
             **({"primaryImageOfPage": {"@type": "ImageObject", "url": f"{DOM}/fotos/{mi.group(1)}",
-                                       "contentLocation": LOCAL}} if mi else {})}]
+                                       "contentLocation": LOCAL}} if mi else {}), **(extra or {})}]
         if caminho != "/" and not any(g.get("@type") == "WebSite" for g in grafo):
             grafo = grafo + [{"@type": "WebSite", "@id": f"{DOM}/#site", "url": f"{DOM}/", "name": "Estância Safra"}]
     robots = "noindex,follow" if erro else "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
@@ -192,7 +192,9 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
 <p>Preços e estoque atualizados em {DATA_HTML}.</p>{PROVA}</div>
 <div><b>À venda</b><ul>
 <li><a href="/silagem-de-milho/">Silagem de milho, R$ {PT} a tonelada</a></li>
-<li><a href="/pre-secado-de-azevem/">Pré-secado de azevém, R$ {PB} a bola</a></li></ul></div>
+<li><a href="/pre-secado-de-azevem/">Pré-secado de azevém, R$ {PB} a bola</a></li>
+<li><a href="/silagem-a-venda-sc/">Silagem à venda em SC</a></li>
+<li><a href="/pre-secado-a-venda/">Pré-secado à venda</a></li></ul></div>
 <div><b>Atendimento</b><ul>
 <li><a href="/regiao/">Região e retirada</a></li>
 <li><a href="/contato/">Contato e pedido</a></li>
@@ -291,7 +293,7 @@ home = f"""
 <section><div class="wrap">
 <p class="rot">Veja antes de vir</p>
 <h2>Fotos reais dos silos e das bolas</h2>
-<p class="lead">Todas as fotos desta página foram feitas na estância em novembro de 2026.</p>
+<p class="lead">Todas as fotos desta página foram feitas na estância em novembro de 2026. Antes de comprar, veja <a href="/silagem-a-venda-sc/">como avaliar silagem à venda em SC</a> e <a href="/pre-secado-a-venda/">como avaliar uma bola de pré-secado</a>.</p>
 <div class="galeria mosaico">
 <figure>{img("silo-lona-araucaria", "Silo trincheira coberto com lona branca, com araucária ao fundo")}<figcaption>Silo coberto, com a araucária ao fundo</figcaption></figure>
 <figure>{img("silo-trincheira-lateral", "Lateral de um silo trincheira com muro de tijolo e lona presa por sacos", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Silo trincheira com muro de tijolo</figcaption></figure>
@@ -345,7 +347,7 @@ sil = f"""
 <div class="txt">
 <p class="migalha"><a href="/">Início</a> › Silagem de milho</p>
 <p class="pill"><i></i><span>{T} t disponíveis · atualizado em {DATA_HTML}</span></p>
-<h1>Silagem de milho à venda: R$ {PT} a tonelada, em {LOCAL}</h1>
+<h1>Silagem de milho em {LOCAL}: R$ {PT} a tonelada</h1>
 <p class="sub">A {NOME} tem {T} toneladas de silagem de milho disponíveis em {MESANO}. Venda por tonelada, com retirada na estância ou frete a combinar.</p>
 <div class="selos">
 <div><b>R$ {PT}</b><span>por tonelada</span></div>
@@ -400,7 +402,7 @@ sil = f"""
 <div class="midia">
 <div>{img("silo-lona-araucaria", "Silo trincheira coberto com lona branca e fileiras de sacos, com araucária ao fundo")}</div>
 <div><p>A silagem de milho da {NOME} fica em silos trincheira, com paredes de tijolo e de madeira, cobertos com lona e fileiras de sacos de peso por cima e nas bordas. As fotos mostram os silos como estavam em novembro de 2026.</p>
-<p>Na retirada, o carregamento é feito direto da face do silo para o seu caminhão. Vale combinar o transporte para que a silagem chegue e seja usada ou reensilada o quanto antes: silagem exposta ao ar perde qualidade.</p></div>
+<p>Na retirada, o carregamento é feito direto da face do silo para o seu caminhão. Vale combinar o transporte para que a silagem chegue e seja usada ou reensilada o quanto antes: silagem exposta ao ar perde qualidade. Veja <a href="/silagem-a-venda-sc/#frete">quanto a silagem custa entregue na sua propriedade</a> e por quanto tempo ela aguenta fora do silo.</p></div>
 </div>
 <div class="galeria" style="margin-top:20px">
 <figure>{img("silo-coberto-eucaliptos", "Silo trincheira coberto visto de frente, com eucaliptos ao fundo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Silo coberto, visto de frente</figcaption></figure>
@@ -483,6 +485,7 @@ pre = f"""
 <source src="/fotos/bolas-pre-secado.mp4" type="video/mp4">Seu navegador não mostra vídeo. Veja as fotos nesta página.</video></div>
 <div><p>O vídeo e as fotos mostram as bolas de pré-secado de azevém como estavam armazenadas em novembro de 2026: embaladas em filme branco, lado a lado, entre os muros de tijolo.</p>
 <p>O pré-secado é o azevém cortado, deixado murchar no campo e depois enfardado e embalado em filme, que veda a entrada de ar. Por ser vendido em bolas fechadas, é prático de transportar e de usar aos poucos: a bola só começa a perder qualidade depois de aberta ou se o filme for furado.</p>
+<p>Recebeu outra oferta de bola? <a href="/pre-secado-a-venda/#comparar-bolas">Compare o pré-secado à venda pelo preço por quilo</a>.</p>
 <p>{wa(msg_pre, "video-presecado", "Perguntar pelo estoque")}</p></div>
 </div></div></section>
 
@@ -511,6 +514,338 @@ pagina("/pre-secado-de-azevem/", f"Pré-secado de azevém: R$ {PB} a bola de {KG
        pre, [NEGOCIO, prod_pre, LD_PRE, migalha("Pré-secado de azevém", "/pre-secado-de-azevem/")],
        msg_pre, f"Pré-secado de azevém · R$ {PB} a bola", og="og-presecado.jpg")
 
+# ---------------------------------------------------------------- FONTES TÉCNICAS (guias de compra)
+# Cada fonte foi aberta e conferida (trecho literal) na data de fatos.json → guias_em.
+FONTES = {
+    "ct74": ("Embrapa Gado de Leite, Comunicado Técnico 74 (2014)",
+             "https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/991566/1/COT74PersioProducaodeSilagemdeMilhoparaSuplementacaodoRebanhoLeiteiro.pdf"),
+    "folder": ("Embrapa Gado de Leite, folder sobre silagem de capim-elefante",
+               "https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1081024/1/FolderPersiocapimelefante.pdf"),
+    "pab": ("Pesquisa Agropecuária Brasileira (Embrapa), v. 53, n. 9, 2018: reensilagem de silagem de milho",
+            "https://apct.sede.embrapa.br/index.php/pab/article/download/25922/14290"),
+    "unoesc": ("Unoesc (SC), resumo do SIEPE sobre exposição da silagem de milho ao ar",
+               "https://periodicos.unoesc.edu.br/siepe/article/download/15006/7931/49198"),
+    "cepa": ("Agrolink, 31 de janeiro de 2025, com dados do Boletim Agropecuário da Epagri/Cepa",
+             "https://www.agrolink.com.br/noticias/santa-catarina-avanca-na-colheita-do-milho-para-silagem_498939.html"),
+    "ufms": ("UFMS/Famez, revisão sobre feno e pré-secados para ruminantes (2019)",
+             "https://famez.ufms.br/files/2019/12/PRODU%C3%87%C3%83O-CARACTERISTICAS-QUALITATIVAS-E-UTILIZA%C3%87%C3%83O-DE-FENO-E-PR%C3%89-SECADOS-PARA-RUMINANTES.pdf"),
+    "uepg": ("João Ricardo Alves Pereira (UEPG), Canal do Leite, 19 de junho de 2019",
+             "https://canaldoleite.com/colunas/joao-ricardo-alves-pereira/comercializacao-de-silagem-pre-secada-em-fardos/"),
+    "semina": ("Semina: Ciências Agrárias (UEL), v. 43, n. 4, 2022: camadas de filme no pré-secado",
+               "https://ojs.uel.br/revistas/uel/index.php/semagrarias/article/download/45052/32040/236584"),
+    "uky": ("University of Kentucky Cooperative Extension, AGR-283, revisado em maio de 2025",
+            "https://publications.mgcafe.uky.edu/sites/publications.ca.uky.edu/files/AGR283.pdf"),
+    "uky_q": ("University of Kentucky, Forage Extension: armazenagem de bolas",
+              "https://forages.mgcafe.uky.edu/baleageq11"),
+    "teagasc": ("Teagasc (Irlanda), Bale Handling: Avoid Damage",
+                "https://teagasc.ie/wp-content/uploads/2025/05/BaleHandling.pdf"),
+    "aces": ("Alabama Cooperative Extension System, Kim Mullenix, 2018",
+             "https://www.aces.edu/blog/topics/beef/strategies-for-using-baleage-in-beef-cattle-operations/"),
+    "azevem": ("Epagri e Embrapa Pecuária Sul, Baldissera e outros (2018)",
+               "https://www.alice.cnptia.embrapa.br/alice/handle/doc/1100511"),
+}
+GUIAS_EM = F.get("guias_em", F["atualizado_em"])
+
+
+def fonte(k, rotulo=None):
+    nome, url = FONTES[k]
+    return f'<a href="{url}" rel="noopener">{rotulo or nome}</a>'
+
+
+def lista_fontes(chaves):
+    itens = "".join(f"<li>{fonte(k)}</li>" for k in chaves)
+    return (f'<ol class="fontes">{itens}</ol><p class="nota">Fontes abertas e conferidas em '
+            f'<time datetime="{GUIAS_EM}">{data_br(GUIAS_EM)}</time>. Preço e estoque são da própria estância, '
+            f'atualizados em {DATA_HTML}.</p>')
+
+
+def citacoes(chaves):
+    return [{"@type": "CreativeWork", "name": FONTES[k][0], "url": FONTES[k][1]} for k in chaves]
+
+
+# ---------------------------------------------------------------- SILAGEM À VENDA EM SC
+FRETE_T, FRETE_RS = 20, 1200                      # exemplo da calculadora de frete (não é preço de frete da estância)
+FRETE_POR_T = FRETE_RS / FRETE_T
+msg_sc = "Olá! Vi no site a silagem de milho à venda em SC, a R$ %s a tonelada. Sou de ___ e preciso de cerca de ___ toneladas." % PT
+FONTES_SC = ["ct74", "folder", "unoesc", "pab", "cepa"]
+FAQ_SC, LD_SC = faq([
+    ("Onde comprar silagem de milho em Santa Catarina?",
+     f"A {NOME} vende silagem de milho em {LOCAL}, no Oeste catarinense: {T} toneladas a R$ {PT} a tonelada em {MESANO}, com retirada no silo. "
+     f"A compra costuma compensar para quem está a até cerca de {RAIO} km, como {CID_TXT}."),
+    ("Qual o preço da tonelada de silagem em SC?",
+     f"Não existe preço oficial da silagem em Santa Catarina: cada vendedor define o seu, e o valor muda com a safra e com a região. "
+     f"Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada (R$ {PKG} o quilo) em {MESANO}, sem frete."),
+    ("Silagem ensacada ou a granel: qual sai mais barata?",
+     f"Compare sempre por tonelada. Para converter o saco, divida o preço pelo peso do saco e multiplique por mil: um saco de 25 kg a R$ 15 (exemplo) sai a R$ 600 a tonelada. "
+     f"A {NOME} vende a granel, por tonelada, a R$ {PT}, carregada da face do silo no caminhão do comprador."),
+    ("Vocês vendem silagem em bola?",
+     f"A silagem de milho da {NOME} é vendida a granel, por tonelada. Em bolas, vendemos o <a href=\"/pre-secado-a-venda/\">pré-secado de azevém, a R$ {PB} a bola de cerca de {KG} kg</a>, "
+     f"que muitos produtores chamam de bola de silagem."),
+    ("Dá para comprar silagem e guardar de novo no meu silo?",
+     f"Dá, e é comum, mas quanto antes melhor. Um estudo publicado em 2018 na Pesquisa Agropecuária Brasileira mostrou que reensilar a silagem de milho depois de 36 horas exposta ao ar "
+     f"reduziu o valor nutritivo e aumentou as perdas de matéria seca. Combine a retirada para compactar e cobrir no mesmo dia."),
+    ("Vocês entregam a silagem em SC?",
+     f"Não. A {NOME} não tem entrega própria: a retirada é em {LOCAL} ou o frete é combinado caso a caso pelo WhatsApp. Use a calculadora desta página para somar o frete ao preço."),
+])
+sc = f"""
+<div class="heroi"><div class="wrap">
+<div class="txt">
+<p class="migalha"><a href="/">Início</a> › Silagem à venda em SC</p>
+<p class="pill"><i></i><span>{T} t disponíveis · atualizado em {DATA_HTML}</span></p>
+<h1>Silagem à venda em SC: onde comprar, quanto custa com frete e como avaliar</h1>
+<p class="sub">A {NOME} vende silagem de milho a granel, por tonelada, em {LOCAL}. Em {MESANO} são {T} toneladas a R$ {PT} a tonelada, com retirada no silo. Compensa para quem está a até cerca de {RAIO} km, como {CIDADES[0]}, {CIDADES[1]} e {CIDADES[2]}.</p>
+<div class="selos">
+<div><b>R$ {PT}</b><span>a tonelada, sem frete</span></div>
+<div><b>{T} t</b><span>em estoque em {MESANO}</span></div>
+<div><b>~{RAIO} km</b><span>raio em que o frete compensa</span></div>
+</div>
+<div class="acoes">{wa(msg_sc, "heroi-silagem-sc", "Pedir pelo WhatsApp", "bt claro")}<a class="bt linha" href="#frete">Somar o frete</a></div>
+{PROVA}
+</div>
+<figure>{img("silo-trincheira-lateral", f"Silo trincheira de silagem de milho com muro de tijolo e lona presa por sacos, na {NOME}, em {LOCAL}", lazy=False)}<figcaption>Foto real · {LOCAL}, novembro de 2026</figcaption></figure>
+</div></div>
+
+<section><div class="wrap">
+<p class="rot">Resposta rápida</p>
+<h2>Onde comprar silagem de milho em SC hoje?</h2>
+<p class="lead">Em {MESANO}, a {NOME} ({MARCA}), em {LOCAL}, tem {T} toneladas de silagem de milho à venda a R$ {PT} a tonelada, o que dá R$ {PKG} por quilo. A venda é a granel, por tonelada, com carregamento direto da face do silo trincheira para o caminhão do comprador.</p>
+<div class="rolagem"><table>
+<caption>Silagem de milho à venda em SC na {NOME}, {LOCAL}. Atualizado em {DATA_HTML}.</caption>
+<tbody>
+<tr><th scope="row">Onde</th><td>{LOCAL}, Oeste catarinense (microrregião de Concórdia)</td></tr>
+<tr><th scope="row">Preço</th><td><b>R$ {PT} por tonelada</b> (R$ {PKG} por kg), sem frete</td></tr>
+<tr><th scope="row">Estoque</th><td>{T} toneladas em {MESANO}</td></tr>
+<tr><th scope="row">Forma de venda</th><td>A granel, por tonelada, carregada da face do silo</td></tr>
+<tr><th scope="row">Retirada</th><td>No silo, em dia e horário combinados. Frete a combinar caso a caso</td></tr>
+<tr><th scope="row">Cidades no raio</th><td>{CID_TXT}, entre outras a até cerca de {RAIO} km</td></tr>
+<tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado na <a href="/silagem-de-milho/">página da silagem de milho</a></td></tr>
+</tbody></table></div>
+<p class="nota">Detalhes da oferta, fotos dos silos e a calculadora de toneladas por rebanho estão na página <a href="/silagem-de-milho/">silagem de milho a R$ {PT} a tonelada</a>.</p>
+</div></section>
+
+<section id="frete"><div class="wrap">
+<p class="rot">Calculadora de frete</p>
+<h2>Quanto a silagem custa entregue na sua propriedade?</h2>
+<p class="lead">Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada em {MESANO}, sem frete. Entregue, ela custa R$ {PT} mais o frete da viagem dividido pelas toneladas da carga. Peça o valor da viagem ao seu freteiro e preencha.</p>
+<div class="caixa">
+<form id="frete-calc" data-preco="{S['preco_tonelada']}">
+<div class="campos3">
+<div class="campo"><label for="carga">Toneladas na carga</label><input id="carga" name="carga" type="number" inputmode="decimal" min="1" step="0.5" value="{FRETE_T}"></div>
+<div class="campo"><label for="viagem">Frete da viagem (R$)</label><input id="viagem" name="viagem" type="number" inputmode="decimal" min="0" step="10" value="{FRETE_RS}"></div>
+<div class="campo"><label for="cargas">Número de viagens</label><input id="cargas" name="cargas" type="number" inputmode="numeric" min="1" value="1"></div>
+</div>
+<p class="nota">Os valores iniciais são só um exemplo: a {NOME} não define nem cobra o frete. Silagem é pesada e úmida, então quanto mais longe, mais o frete pesa em cada tonelada.</p>
+</form>
+<div class="saida" id="frete-saida" aria-live="polite">
+<div class="num">R$ {br(S['preco_tonelada'] + FRETE_POR_T, 2)} <small>por tonelada entregue</small></div>
+<p>Exemplo: R$ {PT} da tonelada + R$ {br(FRETE_RS)} de frete ÷ {FRETE_T} t = R$ {br(FRETE_POR_T, 2)} de frete por tonelada. A carga de {FRETE_T} t sai por R$ {br(FRETE_T * S['preco_tonelada'] + FRETE_RS)} no total.</p>
+{wa(f"Olá! Quero {FRETE_T} t de silagem de milho a R$ {PT} a tonelada. Ainda tem disponível?", "calculadora-frete", "Pedir essa carga no WhatsApp")}
+</div>
+</div></div></section>
+
+<section><div class="wrap">
+<p class="rot">Antes de fechar</p>
+<h2>Como avaliar silagem de milho antes de comprar</h2>
+<p class="lead">Silagem de milho boa tem de 30% a 35% de matéria seca no corte, pH entre 3,8 e 4,2, cor verde a verde-amarelada e cheiro suave, segundo a Embrapa Gado de Leite ({fonte("ct74", "Comunicado Técnico 74, 2014")}). Na hora da compra, quem não tem laudo confere com os olhos, o nariz e a mão.</p>
+<div class="rolagem"><table>
+<caption>Sinais de qualidade da silagem de milho na hora da compra. Referência: {fonte("ct74")}; descarte do mofo: {fonte("folder", "Embrapa Gado de Leite, folder de silagem")}.</caption>
+<thead><tr><th scope="col">O que conferir</th><th scope="col">Sinal bom</th><th scope="col">Sinal de alerta</th></tr></thead>
+<tbody>
+<tr><th scope="row">Cor</th><td>Verde a verde-amarelada</td><td>Marrom-escura ou preta (putrefação)</td></tr>
+<tr><th scope="row">Cheiro</th><td>Suave e agradável</td><td>Manteiga rançosa (fermentação butírica), vinagre forte, queimado ou mofo</td></tr>
+<tr><th scope="row">Umidade (espremer na mão)</th><td>Não escorre água</td><td>Escorre água: silagem úmida demais</td></tr>
+<tr><th scope="row">Mofo</th><td>Ausente na face do silo</td><td>Odor forte de mofo e partes mofadas, que devem ser retiradas e descartadas antes de dar ao gado</td></tr>
+<tr><th scope="row">Temperatura da massa</th><td>Fresca ao toque</td><td>Massa quente: sinal de deterioração pelo ar</td></tr>
+<tr><th scope="row">Laudo</th><td>Matéria seca de 30% a 35% no corte e pH de 3,8 a 4,2</td><td>Vendedor que promete número sem laudo</td></tr>
+</tbody></table></div>
+<p class="nota">A {NOME} ainda não tem laudo bromatológico publicado. {BROMA} Na retirada, a silagem sai da face do silo, onde esses sinais podem ser conferidos antes de carregar.</p>
+</div></section>
+
+<section class="escura"><div class="wrap">
+<p class="rot">Depois de retirar</p>
+<h2>Quanto tempo a silagem comprada aguenta fora do silo?</h2>
+<p class="lead">Silagem de milho retirada do silo deve ser fornecida em até 48 horas de exposição ao ar, segundo um estudo da Unoesc (SC), ou reensilada no mesmo dia: reensilar depois de 36 horas reduziu o valor nutritivo, segundo a Pesquisa Agropecuária Brasileira (2018).</p>
+<div class="tres">
+<div class="passo"><p class="n">01</p><h3>O ar começa a estragar</h3><p>A deterioração começa assim que a silagem é exposta ao ar: a temperatura sobe e os microrganismos decompositores agem. A Embrapa estima em até 15% a perda por deterioração depois da descarga e a classifica como evitável ({fonte("ct74", "Embrapa, 2014")}).</p></div>
+<div class="passo"><p class="n">02</p><h3>Use em até 48 horas</h3><p>Um estudo da Unoesc, em Santa Catarina, concluiu que não seria aconselhável fornecer silagem de milho depois de 48 horas de exposição ao ar ({fonte("unoesc", "Unoesc")}). Leve só o que o rebanho consome nesse prazo ou reensile.</p></div>
+<div class="passo"><p class="n">03</p><h3>Reensile no mesmo dia</h3><p>Reensilar depois de 36 horas no ar reduziu o valor nutritivo e aumentou as perdas, segundo a Pesquisa Agropecuária Brasileira ({fonte("pab", "PAB, 2018")}). Compacte e cubra com lona assim que a carga chegar.</p></div>
+</div></div></section>
+
+<section><div class="wrap">
+<p class="rot">Por que no Oeste</p>
+<h2>O Oeste catarinense concentra a silagem de milho de SC</h2>
+<div class="midia">
+<div>{img("silagem-face-parede", f"Silagem de milho compactada junto à parede de um silo trincheira na {NOME}")}</div>
+<div><p>As microrregiões de São Miguel do Oeste, Chapecó e Concórdia, ligadas à pecuária leiteira, respondem por mais de 50% da produção de silagem de Santa Catarina, segundo o Boletim Agropecuário da Epagri/Cepa de janeiro de 2025 ({fonte("cepa", "Agrolink, 2025")}). {CID} fica na microrregião de Concórdia.</p>
+<p>Para quem compra, isso significa oferta perto e frete curto. A {NOME} atende {CID_TXT} e outros municípios num raio de cerca de {RAIO} km. Veja <a href="/regiao/">como funciona a retirada e quais cidades ficam no raio</a>.</p>
+<p>Também precisa de volumoso em bola? Veja o <a href="/pre-secado-a-venda/">pré-secado à venda, em bolas de cerca de {KG} kg</a>.</p></div>
+</div></div></section>
+
+<section><div class="wrap">
+<p class="rot">Perguntas frequentes</p>
+<h2>Dúvidas de quem procura silagem à venda em SC</h2>
+{FAQ_SC}</div></section>
+
+<section><div class="wrap texto">
+<p class="rot">Como esta página foi feita</p>
+<h2>Fontes e método</h2>
+<p>Preço, estoque, forma de venda e fotos são da própria {NOME}, em {LOCAL}, e mudam nesta página quando mudam na estância. Os critérios de qualidade e de conservação vêm de publicações técnicas abertas, citadas abaixo. Onde não encontramos fonte (por exemplo, uma temperatura de referência em graus para conferir a massa), não informamos número.</p>
+{lista_fontes(FONTES_SC)}
+</div></section>
+{chamada(f"{T} toneladas em {CID}, R$ {PT} a tonelada", f"Diga a sua cidade em SC e quantas toneladas precisa. Confirmamos o estoque na hora.", msg_sc, "chamada-silagem-sc")}
+"""
+pagina("/silagem-a-venda-sc/", "Silagem à venda em SC: preço com frete e como avaliar",
+       f"Silagem de milho à venda em SC: {T} t a R$ {PT} a tonelada em {LOCAL}. Some o frete, veja como avaliar a silagem e as cidades atendidas.",
+       sc, [NEGOCIO, LD_SC, migalha("Silagem à venda em SC", "/silagem-a-venda-sc/")],
+       msg_sc, f"Silagem em SC · R$ {PT} a tonelada", og="og-silagem.jpg",
+       extra={"datePublished": GUIAS_EM, "dateModified": max(GUIAS_EM, F["atualizado_em"]), "mainEntity": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "citation": citacoes(FONTES_SC),
+              "spatialCoverage": {"@type": "State", "name": "Santa Catarina"}})
+
+# ---------------------------------------------------------------- PRÉ-SECADO À VENDA
+msg_pv = "Olá! Vi no site o pré-secado à venda a R$ %s a bola. Sou de ___ e quero ___ bolas." % PB
+FONTES_PV = ["uepg", "uky", "aces", "teagasc", "uky_q", "semina", "ufms", "ct74", "azevem"]
+FAQ_PV, LD_PV = faq([
+    ("Quanto custa uma bola de pré-secado?",
+     f"Na {NOME}, em {LOCAL}, a bola de pré-secado de azevém custa R$ {PB} em {MESANO}. Cada bola pesa cerca de {KG} kg (de {KMIN} a {KMAX} kg), "
+     f"o que dá de R$ {PKG_MIN} a R$ {PKG_MAX} por quilo, sem frete. Para comparar com outra oferta, divida o preço pelo peso da bola."),
+    ("Quanto pesa uma bola de pré-secado?",
+     f"Bolas de pré-secado costumam ter de 400 a 600 kg, segundo o professor João Ricardo Alves Pereira, da UEPG. As da {NOME} pesam cerca de {KG} kg, "
+     f"com variação de {P['variacao_kg']} kg para mais ou para menos, porque o peso depende da umidade e da compactação de cada bola."),
+    ("Bola mais pesada é sempre mais vantajosa?",
+     "Não necessariamente. Como o pré-secado costuma ser vendido por bola, e não por peso, há bolas pesadas porque têm mais água, não mais alimento. "
+     "O professor João Ricardo Alves Pereira, da UEPG, alerta (Canal do Leite, 2019) que boa parte do pré-secado ainda é vendida com matéria seca baixa. Se o vendedor tiver laudo, compare o preço por quilo de matéria seca."),
+    ("Bola de silagem e pré-secado são a mesma coisa?",
+     f"Na maioria das conversas, sim: \"bola de silagem\", \"silagem pré-secada\" e \"pré-secado\" são nomes para o capim cortado, murcho no campo e enfardado em bolas embaladas em filme. "
+     f"A {NOME} vende pré-secado de azevém em bolas; a silagem de milho é vendida <a href=\"/silagem-a-venda-sc/\">a granel, por tonelada</a>."),
+    ("Pré-secado é feno?",
+     "Não. O feno é desidratado até cerca de 10% a 15% de umidade e guardado sem embalagem. O pré-secado é enfardado bem mais úmido, entre 40% e 60% de matéria seca, "
+     "e fermenta dentro do filme, sem ar."),
+    ("Quanto tempo uma bola de pré-secado dura depois de aberta?",
+     "A extensão rural do Alabama (EUA) recomenda oferecer a bola aberta de modo que os animais a consumam em 1 a 2 dias, e a da University of Kentucky fala em menos de dois dias quando a fermentação não foi a ideal. "
+     "Não encontramos recomendação brasileira com prazo diferente."),
+    ("Vocês vendem poucas bolas?",
+     f"Sim. A venda é por unidade: leve uma, dez ou a carga fechada. A retirada é em {LOCAL} ou o frete é combinado caso a caso."),
+])
+pv = f"""
+<div class="heroi"><div class="wrap">
+<div class="txt">
+<p class="migalha"><a href="/">Início</a> › Pré-secado à venda</p>
+<p class="pill"><i></i><span>Disponível hoje · atualizado em {DATA_HTML}</span></p>
+<h1>Pré-secado à venda: quanto custa, quanto pesa e como comparar bolas</h1>
+<p class="sub">Pré-secado de azevém (também chamado de bola de silagem ou silagem pré-secada) em bolas embaladas em filme, de {KMIN} a {KMAX} kg. R$ {PB} a bola, ou de R$ {PKG_MIN} a R$ {PKG_MAX} o quilo, com retirada na {NOME}.</p>
+<div class="selos">
+<div><b>R$ {PB}</b><span>por bola, sem frete</span></div>
+<div><b>{KMIN} a {KMAX} kg</b><span>peso de cada bola</span></div>
+<div><b>R$ {PKG_MIN} a {PKG_MAX}</b><span>por quilo</span></div>
+</div>
+<div class="acoes">{wa(msg_pv, "heroi-pre-secado-venda", "Pedir pelo WhatsApp", "bt claro")}<a class="bt linha" href="#comparar-bolas">Comparar ofertas por quilo</a></div>
+{PROVA}
+</div>
+<figure>{img("bolas-pre-secado", f"Bolas de pré-secado embaladas em filme branco à venda na {NOME}, em {LOCAL}", lazy=False)}<figcaption>Foto real · {LOCAL}, novembro de 2026</figcaption></figure>
+</div></div>
+
+<section><div class="wrap">
+<p class="rot">Resposta rápida</p>
+<h2>Quanto custa e quanto pesa uma bola de pré-secado?</h2>
+<p class="lead">Na {NOME}, em {LOCAL}, a bola de pré-secado de azevém custa R$ {PB} em {MESANO} e pesa cerca de {KG} kg, entre {KMIN} e {KMAX} kg. Isso dá de R$ {PKG_MIN} a R$ {PKG_MAX} por quilo, sem frete. No mercado, as bolas costumam ter de 400 a 600 kg ({fonte("uepg", "Canal do Leite, professor da UEPG, 2019")}), por isso o preço da bola sozinho não diz qual oferta é mais barata.</p>
+<div class="rolagem"><table>
+<caption>Pré-secado à venda na {NOME}, {LOCAL}. Atualizado em {DATA_HTML}.</caption>
+<tbody>
+<tr><th scope="row">Produto</th><td>Pré-secado de azevém em bolas embaladas em filme</td></tr>
+<tr><th scope="row">Preço</th><td><b>R$ {PB} por bola</b>, sem frete</td></tr>
+<tr><th scope="row">Peso</th><td>Cerca de {KG} kg ({KMIN} a {KMAX} kg)</td></tr>
+<tr><th scope="row">Preço por quilo</th><td>De R$ {PKG_MIN} (bola de {KMAX} kg) a R$ {PKG_MAX} (bola de {KMIN} kg)</td></tr>
+<tr><th scope="row">Quantidade mínima</th><td>Uma bola. Venda por unidade</td></tr>
+<tr><th scope="row">Retirada</th><td>Em {LOCAL}, Oeste de SC, ou frete a combinar</td></tr>
+<tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado na <a href="/pre-secado-de-azevem/">página do pré-secado de azevém</a></td></tr>
+</tbody></table></div>
+<p class="nota">Vídeo das bolas e comparação com a silagem de milho: <a href="/pre-secado-de-azevem/">pré-secado de azevém a R$ {PB} a bola</a>.</p>
+</div></section>
+
+<section id="comparar-bolas"><div class="wrap">
+<p class="rot">Comparador</p>
+<h2>Qual bola de pré-secado sai mais barata por quilo?</h2>
+<p class="lead">A bola de pré-secado da {NOME} sai a R$ {br(P["preco_bola"] / P["peso_bola_kg"], 2)} o quilo (R$ {PB} ÷ {KG} kg), em {MESANO}. Para comparar com outra oferta, divida o preço da bola pelo peso. Se o vendedor tiver laudo, divida também pela matéria seca: é ela que alimenta, não a água. Preencha a outra oferta que você recebeu.</p>
+<div class="caixa">
+<form id="bolas" data-preco="{P['preco_bola']}" data-peso="{P['peso_bola_kg']}">
+<div class="campos3">
+<div class="campo"><label for="b1p">Bola A: preço (R$)</label><input id="b1p" name="b1p" type="number" inputmode="decimal" min="1" value="{P['preco_bola']}"></div>
+<div class="campo"><label for="b1k">Bola A: peso (kg)</label><input id="b1k" name="b1k" type="number" inputmode="decimal" min="1" value="{P['peso_bola_kg']}"></div>
+<div class="campo"><label for="b1m">Bola A: matéria seca (%)</label><input id="b1m" name="b1m" type="number" inputmode="decimal" min="1" max="100" placeholder="se tiver laudo"></div>
+<div class="campo"><label for="b2p">Bola B: preço (R$)</label><input id="b2p" name="b2p" type="number" inputmode="decimal" min="1" placeholder="outra oferta"></div>
+<div class="campo"><label for="b2k">Bola B: peso (kg)</label><input id="b2k" name="b2k" type="number" inputmode="decimal" min="1" placeholder="peso informado"></div>
+<div class="campo"><label for="b2m">Bola B: matéria seca (%)</label><input id="b2m" name="b2m" type="number" inputmode="decimal" min="1" max="100" placeholder="se tiver laudo"></div>
+</div>
+<p class="nota">A bola A já vem com a oferta da {NOME} (R$ {PB}, cerca de {KG} kg). Peso de bola varia: pergunte se foi pesada na balança ou estimado.</p>
+</form>
+<div class="saida" id="bolas-saida" aria-live="polite">
+<div class="num">R$ {br(P['preco_bola'] / P['peso_bola_kg'], 2)} <small>por quilo (bola A)</small></div>
+<p>R$ {PB} ÷ {KG} kg = R$ {br(P['preco_bola'] / P['peso_bola_kg'], 2)} por quilo. Preencha a bola B para comparar.</p>
+{wa(msg_pv, "comparador-bolas", "Pedir bolas no WhatsApp")}
+</div>
+</div></div></section>
+
+<section><div class="wrap">
+<p class="rot">Pré-secado, feno ou silagem</p>
+<h2>Qual a diferença entre pré-secado, feno e silagem de milho?</h2>
+<p class="lead">A diferença principal é a água. O feno é seco até 10% a 15% de umidade ({fonte("ufms", "UFMS, 2019")}); o pré-secado é enfardado com 40% a 60% de matéria seca ({fonte("uky", "University of Kentucky, 2025")}); a silagem de milho é cortada com 30% a 35% de matéria seca ({fonte("ct74", "Embrapa, 2014")}).</p>
+<div class="rolagem"><table>
+<caption>Feno, pré-secado e silagem de milho comparados. Fontes: UFMS (2019), University of Kentucky (2025) e Embrapa Gado de Leite (2014).</caption>
+<thead><tr><th scope="col">Volumoso</th><th scope="col">Água ou matéria seca de referência</th><th scope="col">Como é guardado</th><th scope="col">Na {NOME}</th></tr></thead>
+<tbody>
+<tr><th scope="row">Feno</th><td>10% a 15% de umidade</td><td>Seco, sem embalagem vedada</td><td>Fora do nosso catálogo</td></tr>
+<tr><th scope="row">Pré-secado (bola de silagem)</th><td>40% a 60% de matéria seca</td><td>Bola embalada em filme, fermenta sem ar</td><td><a href="/pre-secado-de-azevem/">Azevém, R$ {PB} a bola</a></td></tr>
+<tr><th scope="row">Silagem de milho</th><td>30% a 35% de matéria seca no corte</td><td>Silo trincheira, compactada e coberta com lona</td><td><a href="/silagem-a-venda-sc/">R$ {PT} a tonelada</a></td></tr>
+</tbody></table></div>
+<p class="nota">O azevém-anual é a principal forrageira de inverno do Sul do Brasil, segundo a Epagri e a Embrapa Pecuária Sul ({fonte("azevem", "Baldissera e outros, 2018")}).</p>
+</div></section>
+
+<section><div class="wrap">
+<p class="rot">Antes de fechar</p>
+<h2>Como avaliar uma bola de pré-secado antes de comprar</h2>
+<p class="lead">Numa bola de pré-secado, confira o filme sem furos, a data em que a bola foi feita, o cheiro e o mofo ao abrir e o preço por quilo. Um furo pequeno, de 3 mm, já fez perder 8% da silagem aproveitável numa pesquisa do Teagasc, na Irlanda.</p>
+<div class="rolagem"><table>
+<caption>O que conferir numa bola de pré-secado. Fontes: Teagasc (Irlanda), University of Kentucky (EUA), Semina/UEL (2022) e UEPG (2019).</caption>
+<thead><tr><th scope="col">O que conferir</th><th scope="col">Por que importa</th></tr></thead>
+<tbody>
+<tr><th scope="row">Furos no filme</th><td>Na pesquisa irlandesa do Teagasc, um único furo pequeno, de 3 mm, fez perder 8% da silagem aproveitável da bola; um furo grande, de 24 mm, fez perder um terço ({fonte("teagasc", "Teagasc")}).</td></tr>
+<tr><th scope="row">Camadas de filme</th><td>As extensões de Kentucky ({fonte("uky", "AGR-283")}) e da Irlanda ({fonte("teagasc", "Teagasc")}) recomendam seis camadas. Num estudo brasileiro com Tifton 85, quatro ou seis camadas não mudaram o valor nutricional ({fonte("semina", "Semina, 2022")}).</td></tr>
+<tr><th scope="row">Tempo de armazenagem</th><td>No estudo brasileiro com Tifton 85, 90 dias de armazenagem reduziram o valor nutricional do pré-secado ({fonte("semina", "Semina, 2022")}). Pergunte quando a bola foi feita.</td></tr>
+<tr><th scope="row">Cheiro e mofo ao abrir</th><td>Cheiro suave; mofo e partes estragadas devem ser descartados antes de dar ao gado.</td></tr>
+<tr><th scope="row">Peso e umidade</th><td>Bola pesada pode ser bola úmida: o pré-secado costuma ser vendido por bola, e parte dele ainda sai com matéria seca baixa ({fonte("uepg", "UEPG")}). Sem laudo, compare pelo preço por quilo.</td></tr>
+</tbody></table></div>
+</div></section>
+
+<section class="escura"><div class="wrap">
+<p class="rot">Depois de comprar</p>
+<h2>Como transportar e guardar as bolas de pré-secado</h2>
+<p class="lead">Bolas de pré-secado devem ser manuseadas o mínimo, guardadas em lugar drenado e longe de mato, com furos tapados na hora, e consumidas em 1 a 2 dias depois de abertas, segundo extensões rurais da Irlanda e dos Estados Unidos.</p>
+<div class="tres">
+<div class="passo"><p class="n">01</p><h3>Mexa o mínimo</h3><p>Quanto mais a bola é manuseada, maior a chance de furar o filme. No transporte, ande devagar nos trechos ruins: solavancos forçam o filme ({fonte("teagasc", "Teagasc")}).</p></div>
+<div class="passo"><p class="n">02</p><h3>Guarde longe do mato</h3><p>Deixe as bolas em lugar bem drenado, longe de árvores e mato que abriguem roedores e atraiam pássaros ({fonte("uky_q", "Kentucky")}). Se for empilhar, o Teagasc indica pilhas de duas ou três bolas deitadas ({fonte("teagasc", "Teagasc")}).</p></div>
+<div class="passo"><p class="n">03</p><h3>Conserte e consuma rápido</h3><p>Tape furos na hora com fita própria para filme de silagem; fita comum se desfaz ao sol ({fonte("uky_q", "Kentucky")}). Depois de aberta, ofereça a bola de modo que o gado a consuma em 1 a 2 dias ({fonte("aces", "Alabama Extension")}).</p></div>
+</div></div></section>
+
+<section><div class="wrap">
+<p class="rot">Perguntas frequentes</p>
+<h2>Dúvidas de quem procura pré-secado à venda</h2>
+{FAQ_PV}</div></section>
+
+<section><div class="wrap texto">
+<p class="rot">Como esta página foi feita</p>
+<h2>Fontes e método</h2>
+<p>Preço, peso das bolas, forma de venda e fotos são da própria {NOME}, em {LOCAL}. O peso é uma faixa ({KMIN} a {KMAX} kg) porque cada bola sai com umidade e compactação diferentes. As orientações de compra e armazenagem vêm das publicações técnicas abaixo; algumas são de extensão rural da Irlanda e dos Estados Unidos, porque não encontramos recomendação brasileira equivalente para furos, empilhamento e prazo depois de aberta.</p>
+{lista_fontes(FONTES_PV)}
+<p>Procurando silagem de milho por tonelada? Veja a <a href="/silagem-a-venda-sc/">silagem à venda em SC</a>.</p>
+</div></section>
+{chamada(f"Pré-secado à venda, R$ {PB} a bola", f"Retirada em {LOCAL}. Diga quantas bolas e a sua cidade.", msg_pv, "chamada-pre-secado-venda")}
+"""
+pagina("/pre-secado-a-venda/", "Pré-secado à venda: preço da bola, peso e como comparar",
+       f"Pré-secado à venda no Oeste de SC: bolas de ~{KG} kg a R$ {PB} em {LOCAL}. Peso da bola, preço por quilo e como avaliar antes de comprar.",
+       pv, [NEGOCIO, LD_PV, migalha("Pré-secado à venda", "/pre-secado-a-venda/")],
+       msg_pv, f"Pré-secado · R$ {PB} a bola", og="og-presecado.jpg",
+       extra={"datePublished": GUIAS_EM, "dateModified": max(GUIAS_EM, F["atualizado_em"]), "mainEntity": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "citation": citacoes(FONTES_PV)})
+
 # ---------------------------------------------------------------- REGIÃO
 msg_reg = "Olá! Sou de ___ e quero saber se compensa buscar silagem ou pré-secado na Estância Safra."
 lis = "".join(f"<li>{c} ({UF})</li>" for c in CIDADES)
@@ -538,6 +873,7 @@ reg = f"""
 <div class="duas">
 <div><p>Além de {CID}, estes municípios do Oeste e do Meio-Oeste de Santa Catarina ficam na vizinhança da estância:</p>
 <ul style="margin:16px 0 0 20px;columns:2">{lis}</ul>
+<p>Quem vem de outras regiões de Santa Catarina encontra preço, frete e critérios de compra em <a href="/silagem-a-venda-sc/">silagem à venda em SC</a>.</p>
 <p class="nota">A lista é um ponto de partida. A distância que importa é a da estrada até a sua propriedade: confira a rota no <a href="{F['perfil_google']}" rel="noopener">perfil da estância no Google</a>.</p></div>
 <div>{img("silo-parede-madeira-1", "Silo trincheira com parede de madeira escorada e silos metálicos ao fundo", w=1280, h=960)}</div>
 </div></div></section>
@@ -679,7 +1015,10 @@ for f in (SRC / "fotos").iterdir():
     if not alvo.exists() or alvo.stat().st_size != f.stat().st_size:
         shutil.copyfile(f, alvo)
 
-urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/regiao/", "/contato/", "/privacidade/"]
+urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/silagem-a-venda-sc/", "/pre-secado-a-venda/", "/regiao/", "/contato/", "/privacidade/"]
+
+
+LASTMOD = {u: max(GUIAS_EM, F["atualizado_em"]) for u in ("/silagem-a-venda-sc/", "/pre-secado-a-venda/")}
 
 
 def imgs_da(u):
@@ -691,7 +1030,7 @@ def imgs_da(u):
 (OUT / "sitemap.xml").write_text(
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
     'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' +
-    "".join(f"  <url><loc>{DOM}{u}</loc><lastmod>{F['atualizado_em']}</lastmod>{imgs_da(u)}</url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
+    "".join(f"  <url><loc>{DOM}{u}</loc><lastmod>{LASTMOD.get(u, F['atualizado_em'])}</lastmod>{imgs_da(u)}</url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
 (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {DOM}/sitemap.xml\n", encoding="utf-8")
 (OUT / "llms.txt").write_text(f"""# Estância Safra ({NOME})
 
@@ -707,6 +1046,8 @@ def imgs_da(u):
 ## Páginas
 - [Silagem de milho]({DOM}/silagem-de-milho/): preço, estoque, armazenagem, calculadora de toneladas.
 - [Pré-secado de azevém]({DOM}/pre-secado-de-azevem/): preço por bola e por quilo, peso, vídeo, comparação com a silagem.
+- [Silagem à venda em SC]({DOM}/silagem-a-venda-sc/): onde comprar silagem de milho em Santa Catarina, custo com frete, como avaliar antes de comprar e quanto tempo dura fora do silo, com fontes da Embrapa.
+- [Pré-secado à venda]({DOM}/pre-secado-a-venda/): quanto custa e quanto pesa uma bola, comparador de preço por quilo, diferença para feno e silagem, como avaliar e guardar as bolas.
 - [Região e retirada]({DOM}/regiao/): municípios próximos e como funciona a retirada.
 - [Contato]({DOM}/contato/): pedido pelo WhatsApp.
 - [Política de privacidade]({DOM}/privacidade/): o que o site coleta (Google Analytics) e direitos pela LGPD.
