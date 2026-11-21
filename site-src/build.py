@@ -187,7 +187,7 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
 {corpo}
 </main>
 <footer class="rod"><div class="wrap">
-<div><img src="/assets/safra-emblema-negativo.svg" alt="" width="130" height="96" loading="lazy">
+<div><img src="/assets/safra-emblema-negativo.svg" alt="Emblema da Estância Safra" width="130" height="96" loading="lazy">
 <p><strong>{NOME}</strong> ({MARCA})<br>{CID}, Santa Catarina, Brasil</p>
 <p>Preços e estoque atualizados em {DATA_HTML}.</p>{PROVA}</div>
 <div><b>À venda</b><ul>
@@ -302,7 +302,7 @@ home = f"""
 <figure>{img("silos-vista-vale", "Dois silos trincheira cobertos, lado a lado, com pasto ao fundo", sizes="(min-width:901px) 280px, 50vw")}<figcaption>Dois silos lado a lado</figcaption></figure>
 </div></div></section>
 
-<div class="faixa-foto">{img("lona-silos-graneleiros", "", sizes="100vw")}
+<div class="faixa-foto">{img("lona-silos-graneleiros", "Silo trincheira coberto com lona e sacos de peso, com silos graneleiros ao fundo", sizes="100vw")}
 <div class="wrap"><p class="rot">Nosso jeito de vender</p>
 <h2>O que está no site é o que você encontra na estância</h2>
 <div class="tres">
@@ -424,7 +424,7 @@ prod_sil = {"@type": "Product", "@id": f"{DOM}/silagem-de-milho/#produto", "name
             "brand": {"@type": "Brand", "name": MARCA},
             "offers": oferta(S["preco_tonelada"], "TNE", "tonelada", S["toneladas"])}
 pagina("/silagem-de-milho/", f"Silagem de milho a R$ {PT} a tonelada em {LOCAL}",
-       f"{T} toneladas de silagem de milho a R$ {PT} a tonelada (R$ {PKG}/kg) em {LOCAL}. Retirada no local, até cerca de {RAIO} km. Calcule quanto você precisa.",
+       f"{T} toneladas de silagem de milho a R$ {PT} a tonelada (R$ {PKG}/kg) em {LOCAL}. Retirada no local. Calcule quanto você precisa.",
        sil, [NEGOCIO, prod_sil, LD_SIL, migalha("Silagem de milho", "/silagem-de-milho/")],
        msg_sil, f"Silagem de milho · R$ {PT} a tonelada", og="og-silagem.jpg")
 
@@ -510,7 +510,7 @@ prod_pre = {"@type": "Product", "@id": f"{DOM}/pre-secado-de-azevem/#produto", "
             "weight": {"@type": "QuantitativeValue", "minValue": KMIN, "maxValue": KMAX, "unitCode": "KGM"},
             "offers": oferta(P["preco_bola"], "C62", "bola")}
 pagina("/pre-secado-de-azevem/", f"Pré-secado de azevém: R$ {PB} a bola de {KG} kg em {CID}",
-       f"Pré-secado de azevém (silagem pré-secada) em bolas de cerca de {KG} kg a R$ {PB} cada, em {LOCAL}. Retirada no local. Veja fotos, vídeo e preço por quilo.",
+       f"Pré-secado de azevém (silagem pré-secada) em bolas de cerca de {KG} kg a R$ {PB} cada em {LOCAL}, com retirada no local. Fotos, vídeo e preço/kg.",
        pre, [NEGOCIO, prod_pre, LD_PRE, migalha("Pré-secado de azevém", "/pre-secado-de-azevem/")],
        msg_pre, f"Pré-secado de azevém · R$ {PB} a bola", og="og-presecado.jpg")
 
@@ -895,7 +895,7 @@ reg = f"""
 {chamada("Sua cidade está no raio?", "Mande a cidade e a quantidade. Respondemos se compensa.", msg_reg, "chamada-regiao")}
 """
 pagina("/regiao/", f"Silagem de milho perto de {CIDADES[0]} e região | Estância Safra",
-       f"Silagem de milho e pré-secado de azevém com retirada em {LOCAL}, para produtores de {CIDADES[0]}, {CIDADES[1]}, {CIDADES[2]} e região, num raio de cerca de {RAIO} km.",
+       f"Silagem de milho e pré-secado de azevém com retirada em {LOCAL}, para produtores de {CIDADES[0]}, {CIDADES[1]}, {CIDADES[2]} e região, até cerca de {RAIO} km.",
        reg, [NEGOCIO, migalha("Região e retirada", "/regiao/")], msg_reg, f"Retirada em {LOCAL}")
 
 # ---------------------------------------------------------------- CONTATO
@@ -938,7 +938,7 @@ con = f"""
 </div></div></section>
 """
 pagina("/contato/", "Contato e pedido pelo WhatsApp | Estância Safra",
-       f"Peça silagem de milho ou pré-secado de azevém direto à {NOME}, em {LOCAL}, pelo WhatsApp. Diga produto, quantidade e cidade.",
+       f"Peça silagem de milho ou pré-secado de azevém à {NOME}, em {LOCAL}, pelo WhatsApp. Diga produto, quantidade e cidade.",
        con, [NEGOCIO, migalha("Contato", "/contato/")], msg_con, "Fale direto com a estância")
 
 # ---------------------------------------------------------------- PRIVACIDADE
