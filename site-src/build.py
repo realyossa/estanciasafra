@@ -82,7 +82,7 @@ NAV = [("/silagem-de-milho/", "Silagem de milho"), ("/pre-secado-de-azevem/", "P
 NEGOCIO = {
     "@type": "LocalBusiness", "@id": f"{DOM}/#estancia", "name": NOME, "alternateName": [MARCA, "Estância Safra"],
     "url": f"{DOM}/", "logo": f"{DOM}/assets/safra-emblema.png", "image": f"{DOM}/fotos/og.jpg",
-    "description": f"Propriedade rural em {LOCAL} que vende silagem de milho por tonelada e pré-secado de azevém em bolas, com retirada no local.",
+    "description": f"Propriedade rural em {LOCAL} que vende silagem de milho por tonelada e pré-secado de azevém em bolas, com entrega até cerca de {RAIO} km (frete orçado) ou retirada no local.",
     "address": {"@type": "PostalAddress", "addressLocality": CID, "addressRegion": UF, "addressCountry": "BR"},
     "areaServed": [{"@type": "City", "name": f"{c}, {UF}"} for c in [CID] + CIDADES],
     "hasMap": F["perfil_google"], "priceRange": "R$", "currenciesAccepted": "BRL",
@@ -216,8 +216,8 @@ def tabela_oferta():
 <caption>Preços e estoque da {NOME}, em {LOCAL}. Atualizado em {DATA_HTML}. Valores para retirada no local, sem frete.</caption>
 <thead><tr><th scope="col">Produto</th><th scope="col">Preço</th><th scope="col">Equivale a</th><th scope="col">Disponível</th><th scope="col">Como levar</th></tr></thead>
 <tbody>
-<tr><th scope="row"><a href="/silagem-de-milho/">Silagem de milho</a></th><td><b>R$ {PT}</b> por tonelada</td><td>R$ {PKG} por kg</td><td>{T} toneladas</td><td>Retirada no local ou frete a combinar</td></tr>
-<tr><th scope="row"><a href="/pre-secado-de-azevem/">Pré-secado de azevém</a></th><td><b>R$ {PB}</b> por bola</td><td>R$ {PKG_MIN} a R$ {PKG_MAX} por kg</td><td>Bolas de cerca de {KG} kg ({KMIN} a {KMAX} kg)</td><td>Retirada no local ou frete a combinar</td></tr>
+<tr><th scope="row"><a href="/silagem-de-milho/">Silagem de milho</a></th><td><b>R$ {PT}</b> por tonelada</td><td>R$ {PKG} por kg</td><td>{T} toneladas</td><td>Retirada no local ou entrega até {RAIO} km, frete orçado</td></tr>
+<tr><th scope="row"><a href="/pre-secado-de-azevem/">Pré-secado de azevém</a></th><td><b>R$ {PB}</b> por bola</td><td>R$ {PKG_MIN} a R$ {PKG_MAX} por kg</td><td>Bolas de cerca de {KG} kg ({KMIN} a {KMAX} kg)</td><td>Retirada no local ou entrega até {RAIO} km, frete orçado</td></tr>
 </tbody></table></div>"""
 
 
@@ -235,7 +235,7 @@ FAQ_HOME, LD_HOME = faq([
     (f"Quanto custa a tonelada de silagem de milho?",
      f"Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada em {MESANO}, o que dá R$ {PKG} por quilo. O valor é para retirada na estância e não inclui frete."),
     (f"Vocês entregam?",
-     f"Não. A {NOME} não tem entrega própria: o comprador retira em {LOCAL} ou o frete é combinado caso a caso. Por isso a compra costuma compensar para quem está a até cerca de {RAIO} km."),
+     f"Sim, até cerca de {RAIO} km de {LOCAL}. O frete é orçado pelo WhatsApp conforme a distância até a sua propriedade e o tamanho da carga. Quem tem caminhão também pode retirar na estância."),
     (f"Tem análise bromatológica?",
      f"{BROMA}"),
     (f"Qual a diferença entre silagem de milho e pré-secado de azevém?",
@@ -261,7 +261,7 @@ home = f"""
 <section id="oferta" class="banda" style="margin-top:0"><div class="wrap">
 <p class="rot">Disponível hoje</p>
 <h2>Quanto custa e quanto tem</h2>
-<p class="lead">Em {MESANO}, a {NOME} tem {T} toneladas de silagem de milho a R$ {PT} a tonelada e bolas de pré-secado de azevém a R$ {PB} cada. Não fazemos entrega: a retirada é na estância, em {LOCAL}, ou com frete a combinar.</p>
+<p class="lead">Em {MESANO}, a {NOME} tem {T} toneladas de silagem de milho a R$ {PT} a tonelada e bolas de pré-secado de azevém a R$ {PB} cada. Entregamos até cerca de {RAIO} km, com frete orçado conforme a distância, ou você retira na estância, em {LOCAL}.</p>
 {tabela_oferta()}
 </div></section>
 
@@ -286,7 +286,7 @@ home = f"""
 <h2>Três passos, sem intermediário</h2>
 <div class="tres">
 <div class="passo"><p class="n">01</p><h3>Chame no WhatsApp</h3><p>Diga o produto, a quantidade e de que cidade você vem. Confirmamos o estoque na hora.</p></div>
-<div class="passo"><p class="n">02</p><h3>Combine a retirada</h3><p>Marcamos dia e horário para o seu caminhão carregar na estância, em {LOCAL}. Se precisar de frete, combinamos.</p></div>
+<div class="passo"><p class="n">02</p><h3>Combine a entrega ou a retirada</h3><p>Até cerca de {RAIO} km, orçamos o frete até a sua propriedade. Se preferir, marcamos dia e horário para o seu caminhão carregar na estância, em {LOCAL}.</p></div>
 <div class="passo"><p class="n">03</p><h3>Carregue e leve</h3><p>Você paga pelo que levar: silagem por tonelada, pré-secado por bola.</p></div>
 </div></div></section>
 
@@ -334,7 +334,7 @@ FAQ_SIL, LD_SIL = faq([
     (f"Vale a pena comprar silagem de longe?",
      f"Depende do frete. Silagem é um produto pesado e úmido, então o transporte pesa no custo final por quilo. Na {NOME}, a compra costuma compensar para propriedades a até cerca de {RAIO} km de {LOCAL}. Acima disso, peça o frete antes e some ao preço da tonelada."),
     (f"Vocês entregam a silagem?",
-     f"Não. A venda é com retirada na estância, em {LOCAL}. Se você não tem caminhão, o frete pode ser combinado pelo WhatsApp."),
+     f"Sim, até cerca de {RAIO} km de {LOCAL}, com frete orçado pelo WhatsApp conforme a distância e as toneladas. Quem tem caminhão pode retirar direto no silo."),
     (f"A silagem tem análise bromatológica?",
      f"{BROMA}"),
     (f"Posso comprar pouca quantidade?",
@@ -348,7 +348,7 @@ sil = f"""
 <p class="migalha"><a href="/">Início</a> › Silagem de milho</p>
 <p class="pill"><i></i><span>{T} t disponíveis · atualizado em {DATA_HTML}</span></p>
 <h1>Silagem de milho em {LOCAL}: R$ {PT} a tonelada</h1>
-<p class="sub">A {NOME} tem {T} toneladas de silagem de milho disponíveis em {MESANO}. Venda por tonelada, com retirada na estância ou frete a combinar.</p>
+<p class="sub">A {NOME} tem {T} toneladas de silagem de milho disponíveis em {MESANO}. Venda por tonelada, com retirada na estância ou entrega até cerca de {RAIO} km com frete orçado.</p>
 <div class="selos">
 <div><b>R$ {PT}</b><span>por tonelada</span></div>
 <div><b>R$ {PKG}</b><span>por quilo</span></div>
@@ -370,7 +370,7 @@ sil = f"""
 <tr><th scope="row">Preço</th><td><b>R$ {PT} por tonelada</b> (R$ {PKG} por kg), sem frete</td></tr>
 <tr><th scope="row">Quantidade disponível</th><td>{T} toneladas</td></tr>
 <tr><th scope="row">Armazenagem</th><td>Silos trincheira, cobertos com lona e sacos de peso</td></tr>
-<tr><th scope="row">Entrega</th><td>Não fazemos. Retirada em {LOCAL} ou frete a combinar</td></tr>
+<tr><th scope="row">Entrega</th><td>Até cerca de {RAIO} km, com frete orçado pelo WhatsApp. Ou retirada em {LOCAL}</td></tr>
 <tr><th scope="row">Região que compensa</th><td>Até cerca de {RAIO} km da estância</td></tr>
 <tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado nesta página</td></tr>
 </tbody></table></div>
@@ -419,7 +419,7 @@ sil = f"""
 {chamada(f"{T} toneladas disponíveis, R$ {PT} a tonelada", f"Retirada em {LOCAL}. Diga a quantidade e a sua cidade.", msg_sil, "chamada-silagem")}
 """
 prod_sil = {"@type": "Product", "@id": f"{DOM}/silagem-de-milho/#produto", "name": "Silagem de milho",
-            "description": f"Silagem de milho vendida por tonelada pela {NOME}, em {LOCAL}. {T} toneladas disponíveis, retirada no local.",
+            "description": f"Silagem de milho vendida por tonelada pela {NOME}, em {LOCAL}. {T} toneladas disponíveis, com retirada no local ou entrega até cerca de {RAIO} km.",
             "category": "Volumoso para alimentação animal", "image": [f"{DOM}/fotos/silagem-face-detalhe.webp", f"{DOM}/fotos/silo-coberto-eucaliptos.webp"],
             "brand": {"@type": "Brand", "name": MARCA},
             "offers": oferta(S["preco_tonelada"], "TNE", "tonelada", S["toneladas"])}
@@ -440,7 +440,7 @@ FAQ_PRE, LD_PRE = faq([
     (f"Posso comprar poucas bolas?",
      f"Sim, a venda é por unidade. Diga pelo WhatsApp quantas bolas você quer e combinamos a retirada."),
     (f"Vocês entregam?",
-     f"Não. A retirada é na estância, em {LOCAL}, ou com frete a combinar. Costuma compensar para quem está a até cerca de {RAIO} km."),
+     f"Sim, até cerca de {RAIO} km de {LOCAL}. O frete é orçado pelo WhatsApp conforme a distância e o número de bolas. Também dá para retirar na estância."),
     (f"Tem análise bromatológica do pré-secado?",
      f"{BROMA}"),
 ])
@@ -450,7 +450,7 @@ pre = f"""
 <p class="migalha"><a href="/">Início</a> › Pré-secado de azevém</p>
 <p class="pill"><i></i><span>Disponível hoje · atualizado em {DATA_HTML}</span></p>
 <h1>Pré-secado de azevém em bolas de {KG} kg: R$ {PB} a bola</h1>
-<p class="sub">Também chamado de silagem pré-secada ou bola de silagem. Bolas embaladas em filme, à venda na {NOME}, em {LOCAL}. Cada bola pesa entre {KMIN} e {KMAX} kg. Retirada na estância ou frete a combinar.</p>
+<p class="sub">Também chamado de silagem pré-secada ou bola de silagem. Bolas embaladas em filme, à venda na {NOME}, em {LOCAL}. Cada bola pesa entre {KMIN} e {KMAX} kg. Retirada na estância ou entrega até cerca de {RAIO} km com frete orçado.</p>
 <div class="selos">
 <div><b>R$ {PB}</b><span>por bola</span></div>
 <div><b>~{KG} kg</b><span>cada bola ({KMIN} a {KMAX} kg)</span></div>
@@ -472,7 +472,7 @@ pre = f"""
 <tr><th scope="row">Preço</th><td><b>R$ {PB} por bola</b>, sem frete</td></tr>
 <tr><th scope="row">Peso de cada bola</th><td>Cerca de {KG} kg, podendo variar {P['variacao_kg']} kg para mais ou para menos ({KMIN} a {KMAX} kg)</td></tr>
 <tr><th scope="row">Preço por quilo</th><td>De R$ {PKG_MIN} (bola de {KMAX} kg) a R$ {PKG_MAX} (bola de {KMIN} kg)</td></tr>
-<tr><th scope="row">Entrega</th><td>Não fazemos. Retirada em {LOCAL} ou frete a combinar</td></tr>
+<tr><th scope="row">Entrega</th><td>Até cerca de {RAIO} km, com frete orçado pelo WhatsApp. Ou retirada em {LOCAL}</td></tr>
 <tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado nesta página</td></tr>
 </tbody></table></div>
 </div></section>
@@ -510,7 +510,7 @@ prod_pre = {"@type": "Product", "@id": f"{DOM}/pre-secado-de-azevem/#produto", "
             "weight": {"@type": "QuantitativeValue", "minValue": KMIN, "maxValue": KMAX, "unitCode": "KGM"},
             "offers": oferta(P["preco_bola"], "C62", "bola")}
 pagina("/pre-secado-de-azevem/", f"Pré-secado de azevém: R$ {PB} a bola de {KG} kg em {CID}",
-       f"Pré-secado de azevém (silagem pré-secada) em bolas de cerca de {KG} kg a R$ {PB} cada em {LOCAL}, com retirada no local. Fotos, vídeo e preço/kg.",
+       f"Pré-secado de azevém (silagem pré-secada) em bolas de cerca de {KG} kg a R$ {PB} cada em {LOCAL}. Entrega até {RAIO} km ou retirada. Fotos, vídeo e preço/kg.",
        pre, [NEGOCIO, prod_pre, LD_PRE, migalha("Pré-secado de azevém", "/pre-secado-de-azevem/")],
        msg_pre, f"Pré-secado de azevém · R$ {PB} a bola", og="og-presecado.jpg")
 
@@ -585,7 +585,7 @@ FAQ_SC, LD_SC = faq([
      f"Dá, e é comum, mas quanto antes melhor. Um estudo publicado em 2018 na Pesquisa Agropecuária Brasileira mostrou que reensilar a silagem de milho depois de 36 horas exposta ao ar "
      f"reduziu o valor nutritivo e aumentou as perdas de matéria seca. Combine a retirada para compactar e cobrir no mesmo dia."),
     ("Vocês entregam a silagem em SC?",
-     f"Não. A {NOME} não tem entrega própria: a retirada é em {LOCAL} ou o frete é combinado caso a caso pelo WhatsApp. Use a calculadora desta página para somar o frete ao preço."),
+     f"Sim, até cerca de {RAIO} km de {LOCAL}. O frete é orçado pelo WhatsApp conforme a distância e a carga. Mais longe que isso, a retirada é no silo com o seu freteiro; use a calculadora desta página para somar o frete ao preço."),
 ])
 sc = f"""
 <div class="heroi"><div class="wrap">
@@ -616,7 +616,7 @@ sc = f"""
 <tr><th scope="row">Preço</th><td><b>R$ {PT} por tonelada</b> (R$ {PKG} por kg), sem frete</td></tr>
 <tr><th scope="row">Estoque</th><td>{T} toneladas em {MESANO}</td></tr>
 <tr><th scope="row">Forma de venda</th><td>A granel, por tonelada, carregada da face do silo</td></tr>
-<tr><th scope="row">Retirada</th><td>No silo, em dia e horário combinados. Frete a combinar caso a caso</td></tr>
+<tr><th scope="row">Retirada</th><td>No silo, em dia e horário combinados. Entrega até cerca de {RAIO} km com frete orçado</td></tr>
 <tr><th scope="row">Cidades no raio</th><td>{CID_TXT}, entre outras a até cerca de {RAIO} km</td></tr>
 <tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado na <a href="/silagem-de-milho/">página da silagem de milho</a></td></tr>
 </tbody></table></div>
@@ -626,7 +626,7 @@ sc = f"""
 <section id="frete"><div class="wrap">
 <p class="rot">Calculadora de frete</p>
 <h2>Quanto a silagem custa entregue na sua propriedade?</h2>
-<p class="lead">Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada em {MESANO}, sem frete. Entregue, ela custa R$ {PT} mais o frete da viagem dividido pelas toneladas da carga. Peça o valor da viagem ao seu freteiro e preencha.</p>
+<p class="lead">Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada em {MESANO}, sem frete. Entregue, ela custa R$ {PT} mais o frete da viagem dividido pelas toneladas da carga. Peça o orçamento do nosso frete pelo WhatsApp (até cerca de {RAIO} km) ou o valor da viagem ao seu freteiro, e preencha.</p>
 <div class="caixa">
 <form id="frete-calc" data-preco="{S['preco_tonelada']}">
 <div class="campos3">
@@ -756,7 +756,7 @@ pv = f"""
 <tr><th scope="row">Peso</th><td>Cerca de {KG} kg ({KMIN} a {KMAX} kg)</td></tr>
 <tr><th scope="row">Preço por quilo</th><td>De R$ {PKG_MIN} (bola de {KMAX} kg) a R$ {PKG_MAX} (bola de {KMIN} kg)</td></tr>
 <tr><th scope="row">Quantidade mínima</th><td>Uma bola. Venda por unidade</td></tr>
-<tr><th scope="row">Retirada</th><td>Em {LOCAL}, Oeste de SC, ou frete a combinar</td></tr>
+<tr><th scope="row">Retirada</th><td>Em {LOCAL}, Oeste de SC, ou entrega até cerca de {RAIO} km com frete orçado</td></tr>
 <tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado na <a href="/pre-secado-de-azevem/">página do pré-secado de azevém</a></td></tr>
 </tbody></table></div>
 <p class="nota">Vídeo das bolas e comparação com a silagem de milho: <a href="/pre-secado-de-azevem/">pré-secado de azevém a R$ {PB} a bola</a>.</p>
@@ -883,7 +883,7 @@ reg = f"""
 <h2>Como funciona a retirada na estância</h2>
 <div class="tres">
 <div class="passo"><p class="n">01</p><h3>Confirme o estoque</h3><p>Pelo WhatsApp, diga o produto e a quantidade. Hoje há {T} toneladas de silagem de milho e bolas de pré-secado de azevém.</p></div>
-<div class="passo"><p class="n">02</p><h3>Marque o dia</h3><p>Combinamos dia e horário para o seu caminhão chegar. Sem caminhão, o frete é combinado à parte.</p></div>
+<div class="passo"><p class="n">02</p><h3>Marque o dia</h3><p>Combinamos dia e horário para o seu caminhão chegar. Sem caminhão, entregamos até cerca de {RAIO} km com frete orçado.</p></div>
 <div class="passo"><p class="n">03</p><h3>Carregue em {CID}</h3><p>A silagem sai da face do silo; o pré-secado sai em bolas fechadas, de cerca de {KG} kg cada.</p></div>
 </div></div></section>
 
@@ -905,7 +905,7 @@ con = f"""
 <div class="txt">
 <p class="migalha"><a href="/">Início</a> › Contato</p>
 <h1>Peça silagem de milho ou pré-secado pelo WhatsApp</h1>
-<p class="sub">Atendimento direto com a {NOME}, em {LOCAL}. Preencha o pedido abaixo ou chame agora: confirmamos o estoque e combinamos a retirada.</p>
+<p class="sub">Atendimento direto com a {NOME}, em {LOCAL}. Preencha o pedido abaixo ou chame agora: confirmamos o estoque e orçamos a entrega ou combinamos a retirada.</p>
 <div class="acoes">{wa(msg_con, "heroi-contato", "Chamar no WhatsApp", "bt claro")}</div>
 {PROVA}
 </div>
@@ -933,7 +933,7 @@ con = f"""
 <p><a href="{F['perfil_google']}" rel="noopener">Ver localização e rota no Google</a></p>
 <h3>Preços em {MESANO}</h3>
 <p>Silagem de milho: R$ {PT} a tonelada ({T} t disponíveis).<br>Pré-secado de azevém: R$ {PB} a bola de cerca de {KG} kg.</p>
-<p>Sem entrega: retirada no local ou frete a combinar.</p>
+<p>Entrega até cerca de {RAIO} km com frete orçado, ou retirada no local.</p>
 </div>
 </div></div></section>
 """
@@ -1035,12 +1035,12 @@ def imgs_da(u):
 (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {DOM}/sitemap.xml\n", encoding="utf-8")
 (OUT / "llms.txt").write_text(f"""# Estância Safra ({NOME})
 
-> Propriedade rural em {CID}, Santa Catarina, Brasil, que vende silagem de milho por tonelada e pré-secado de azevém em bolas, com retirada no local. Dados atualizados em {DATA}.
+> Propriedade rural em {CID}, Santa Catarina, Brasil, que vende silagem de milho por tonelada e pré-secado de azevém em bolas, com entrega até cerca de {RAIO} km (frete orçado) ou retirada no local. Dados atualizados em {DATA}.
 
 ## Fatos
 - Silagem de milho: R$ {PT} por tonelada (R$ {PKG} por kg), {T} toneladas disponíveis.
 - Pré-secado de azevém: R$ {PB} por bola de cerca de {KG} kg ({KMIN} a {KMAX} kg), ou R$ {PKG_MIN} a R$ {PKG_MAX} por kg.
-- Não há entrega: retirada em {LOCAL} ou frete a combinar. A compra costuma compensar até cerca de {RAIO} km.
+- Entrega até cerca de {RAIO} km de {LOCAL}, com frete orçado pelo WhatsApp conforme a distância e a carga. Também há retirada no local.
 - Análise bromatológica em andamento; nenhum valor de composição é informado antes do laudo.
 - Contato: WhatsApp, pelos botões do site.
 
