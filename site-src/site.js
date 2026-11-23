@@ -19,15 +19,20 @@
   // 2) Calculadora de toneladas
   var calc = document.getElementById('calc');
   if (calc) {
-    var preco = Number(calc.dataset.preco), estoque = Number(calc.dataset.estoque);
+    var estoque = Number(calc.dataset.estoque), carga = Number(calc.dataset.carga) || 0;
+    var minimo = Number(calc.dataset.minimo) || 0, cheio = Number(calc.dataset.preco), menor = Number(calc.dataset.precoMenor) || cheio;
     var out = document.getElementById('calc-saida');
     var render = function () {
       var a = Number(calc.animais.value) || 0, k = Number(calc.kg.value) || 0, d = Number(calc.dias.value) || 0;
       var t = a * k * d / 1000;
+      var preco = t >= minimo ? cheio : menor;
+      var nc = carga && t >= minimo ? Math.ceil(t / carga) : 0;
+      var cargas = nc ? ', ou ' + nc + (nc > 1 ? ' cargas' : ' carga') + ' de ' + num(carga, 0) + ' t' : '';
+      var abaixo = t > 0 && t < minimo ? ' Abaixo de ' + num(minimo, 0) + ' t a tonelada sai a R$ ' + num(menor, 0) + ' e o pedido depende de disponibilidade.' : '';
       var aviso = t > estoque ? '<p><b>Passa do estoque de hoje (' + num(estoque, 0) + ' t).</b> Fale com a gente para ver o que dá para atender.</p>' : '';
       out.innerHTML = '<div class="num">' + num(t, 1) + ' <small>toneladas</small></div>' +
-        '<p>' + num(a, 0) + ' animais × ' + num(k, 1) + ' kg por dia × ' + num(d, 0) + ' dias. A R$ ' + num(preco, 0) +
-        ' a tonelada, dá <b>' + brl(t * preco) + '</b>, sem frete.</p>' + aviso +
+        '<p>' + num(a, 0) + ' animais × ' + num(k, 1) + ' kg por dia × ' + num(d, 0) + ' dias' + cargas + '. A R$ ' + num(preco, 0) +
+        ' a tonelada, dá <b>' + brl(t * preco) + '</b>, sem frete.' + abaixo + '</p>' + aviso +
         '<a class="bt" data-lead="calculadora" href="https://wa.me/' + zap + '?text=' +
         encodeURIComponent('Olá! Fiz a conta no site: preciso de cerca de ' + num(t, 1) + ' t de silagem de milho (' + num(a, 0) + ' animais, ' + num(d, 0) + ' dias). Ainda tem disponível?') +
         '">Pedir essa quantidade no WhatsApp</a>';
@@ -73,14 +78,15 @@
 
   var fr = document.getElementById('frete-calc');
   if (fr) {
-    var preco = n(fr.dataset.preco), out = document.getElementById('frete-saida');
+    var cheio = n(fr.dataset.preco), menor = n(fr.dataset.precoMenor) || cheio, minimo = n(fr.dataset.minimo), out = document.getElementById('frete-saida');
     var r = function () {
       var t = n(fr.carga.value), v = Math.max(0, n(fr.viagem.value)), c = Math.max(1, Math.round(n(fr.cargas.value)) || 1);
       if (t <= 0) { out.innerHTML = '<div class="num">—</div><p>Informe as toneladas da carga.</p>'; return; }
+      var preco = t * c >= minimo ? cheio : menor;
       var porT = v / t, total = (t * preco + v) * c;
       out.innerHTML = '<div class="num">' + brl(preco + porT, 2) + ' <small>por tonelada entregue</small></div>' +
         '<p>' + brl(preco) + ' da tonelada + ' + brl(v) + ' de frete ÷ ' + num(t, 1) + ' t = ' + brl(porT, 2) + ' de frete por tonelada. ' +
-        (c > 1 ? c + ' viagens, ' + num(t * c, 1) + ' t' : 'A carga de ' + num(t, 1) + ' t') + ' sai por <b>' + brl(total) + '</b> no total.</p>' +
+        (c > 1 ? c + ' viagens, ' + num(t * c, 1) + ' t' : 'A carga de ' + num(t, 1) + ' t') + ' sai por <b>' + brl(total) + '</b> no total.' + (preco !== cheio ? ' Abaixo de ' + num(minimo, 0) + ' t a tonelada sai a ' + brl(menor) + ', sob consulta de disponibilidade.' : '') + '</p>' +
         link('calculadora-frete', 'Pedir essa carga no WhatsApp', 'Olá! Fiz a conta no site: quero cerca de ' + num(t * c, 1) + ' t de silagem de milho a ' + brl(preco) + ' a tonelada. Ainda tem disponível?');
     };
     fr.addEventListener('input', r);
