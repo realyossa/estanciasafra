@@ -1019,6 +1019,7 @@ urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/silagem-a-venda-s
 
 
 LASTMOD = {u: max(GUIAS_EM, F["atualizado_em"]) for u in ("/silagem-a-venda-sc/", "/pre-secado-a-venda/")}
+LASTMOD["/privacidade/"] = max(F["privacidade_em"], F["atualizado_em"])
 
 
 def imgs_da(u):
