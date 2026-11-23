@@ -43,6 +43,8 @@ PKG_MIN = br(P["preco_bola"] / KMAX, 2)     # 0,89
 PKG_MAX = br(P["preco_bola"] / KMIN, 2)     # 1,14
 CIDADES = F["cidades_proximas"]
 CID_TXT = ", ".join(CIDADES[:-1]) + " e " + CIDADES[-1]
+CD = json.loads((SRC / "cidades.json").read_text(encoding="utf-8"))
+MUNS = CD["municipios"]                     # até RAIO km em linha reta, do mais perto ao mais longe
 
 
 AV = F.get("avaliacoes_google")
@@ -77,14 +79,16 @@ def img(nome, alt, w=720, h=1280, lazy=True, extra="", sizes=TAM_PADRAO):
 
 
 NAV = [("/silagem-de-milho/", "Silagem de milho"), ("/pre-secado-de-azevem/", "Pré-secado de azevém"),
-       ("/regiao/", "Região e retirada"), ("/contato/", "Contato")]
+       ("/regiao/", "Entrega e região"), ("/contato/", "Contato")]
 
 NEGOCIO = {
     "@type": "LocalBusiness", "@id": f"{DOM}/#estancia", "name": NOME, "alternateName": [MARCA, "Estância Safra"],
     "url": f"{DOM}/", "logo": f"{DOM}/assets/safra-emblema.png", "image": f"{DOM}/fotos/og.jpg",
     "description": f"Propriedade rural em {LOCAL} que vende silagem de milho por tonelada e pré-secado de azevém em bolas, com entrega até cerca de {RAIO} km (frete orçado) ou retirada no local.",
     "address": {"@type": "PostalAddress", "addressLocality": CID, "addressRegion": UF, "addressCountry": "BR"},
-    "areaServed": [{"@type": "City", "name": f"{c}, {UF}"} for c in [CID] + CIDADES],
+    "geo": {"@type": "GeoCoordinates", "latitude": CD["origem"]["lat"], "longitude": CD["origem"]["lon"]},
+    "areaServed": [{"@type": "GeoCircle", "geoMidpoint": {"@type": "GeoCoordinates", "latitude": CD["origem"]["lat"], "longitude": CD["origem"]["lon"]},
+                    "geoRadius": RAIO * 1000}] + [{"@type": "City", "name": f'{z["nome"]}, {z["uf"]}'} for z in [CD["origem"]] + MUNS],
     "hasMap": F["perfil_google"], "priceRange": "R$", "currenciesAccepted": "BRL",
 }
 if F.get("whatsapp_definitivo"):
@@ -196,7 +200,7 @@ def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg"
 <li><a href="/silagem-a-venda-sc/">Silagem à venda em SC</a></li>
 <li><a href="/pre-secado-a-venda/">Pré-secado à venda</a></li></ul></div>
 <div><b>Atendimento</b><ul>
-<li><a href="/regiao/">Região e retirada</a></li>
+<li><a href="/regiao/">Entrega e região</a></li>
 <li><a href="/contato/">Contato e pedido</a></li>
 <li><a href="{F['perfil_google']}" rel="noopener">Ver a estância no Google</a></li>
 <li><a href="/privacidade/">Política de privacidade</a></li></ul></div>
@@ -315,13 +319,13 @@ home = f"""
 <p class="rot">Perguntas de quem compra</p>
 <h2>O que os produtores perguntam antes de fechar</h2>
 {FAQ_HOME}</div></section>
-{chamada("Precisa de volumoso perto de " + CID + "?", f"Atendemos {CID_TXT} e outros municípios num raio de cerca de {RAIO} km.", msg_home, "chamada-home")}
+{chamada("Precisa de volumoso perto de " + CID + "?", f'Entregamos em {len(MUNS) + 1} municípios num raio de {RAIO} km, como Concórdia, Seara, Xanxerê e Chapecó. <a href="/regiao/" style="color:inherit">Ver as cidades</a>.', msg_home, "chamada-home")}
 """
 NEGOCIO_HOME = {**NEGOCIO, "knowsAbout": ["silagem de milho", "pré-secado de azevém", "volumoso para gado"],
                 "makesOffer": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL"},
                                {"@type": "Offer", "itemOffered": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "price": P["preco_bola"], "priceCurrency": "BRL"}]}
 pagina("/", f"Silagem de milho à venda em {LOCAL} | Estância Safra",
-       f"{T} toneladas de silagem de milho a R$ {PT} a tonelada e pré-secado de azevém a R$ {PB} a bola. Retirada em {LOCAL}. Chame no WhatsApp.",
+       f"{T} toneladas de silagem de milho a R$ {PT} a tonelada e pré-secado de azevém a R$ {PB} a bola. Entrega até {RAIO} km ou retirada em {LOCAL}.",
        home, [NEGOCIO_HOME, LD_HOME, {"@type": "WebSite", "@id": f"{DOM}/#site", "url": f"{DOM}/", "name": "Estância Safra",
                         "inLanguage": "pt-BR", "publisher": {"@id": f"{DOM}/#estancia"}}],
        msg_home, f"Silagem R$ {PT}/t · pré-secado R$ {PB}/bola")
@@ -846,57 +850,228 @@ pagina("/pre-secado-a-venda/", "Pré-secado à venda: preço da bola, peso e com
        msg_pv, f"Pré-secado · R$ {PB} a bola", og="og-presecado.jpg",
        extra={"datePublished": GUIAS_EM, "dateModified": max(GUIAS_EM, F["atualizado_em"]), "mainEntity": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "citation": citacoes(FONTES_PV)})
 
-# ---------------------------------------------------------------- REGIÃO
-msg_reg = "Olá! Sou de ___ e quero saber se compensa buscar silagem ou pré-secado na Estância Safra."
-lis = "".join(f"<li>{c} ({UF})</li>" for c in CIDADES)
+# ---------------------------------------------------------------- ENTREGA E REGIÃO (hub + páginas por município)
+# Dados em site-src/cidades.json: distâncias (sedes, OSRM/OpenStreetMap) e rebanho leiteiro (IBGE, PPM).
+ORIG = CD["origem"]
+FONTES_CID = CD["fontes"]
+PPM_ANO = CD["ppm_ano"]
+CONF_CID = CD["conferido_em"]
+TOTAL_VACAS = ORIG["vacas_ordenhadas"] + sum(z["vacas_ordenhadas"] for z in MUNS)
+RANK = {z["nome"]: i + 1 for i, z in enumerate(sorted([ORIG] + MUNS, key=lambda z: -z["vacas_ordenhadas"]))}
+N_MUN = len(MUNS) + 1
+
+
+def nome_uf(z):
+    return f'{z["nome"]} ({z["uf"]})'
+
+
+def tempo(minutos):
+    h, m = divmod(int(minutos), 60)
+    return f"{h} h {m:02d} min" if h else f"{m} min"
+
+
+def milhoes_litros(mil):
+    return f"{br(mil / 1000, 1)} milhões de litros" if mil >= 1000 else f"{br(mil * 1000)} litros"
+
+
+def link_cid(z):
+    return f'<a href="/entrega/{z["slug"]}/">{z["nome"]}</a>' if z.get("slug") else z["nome"]
+
+
+def fonte_cid(k):
+    return f'<a href="{FONTES_CID[k][1]}" rel="noopener">{FONTES_CID[k][0]}</a>'
+
+
+NOTA_CID = (f'<p class="nota">Distâncias entre as sedes dos municípios: linha reta pelas coordenadas do IBGE; estrada e tempo de carro '
+            f'calculados com {fonte_cid("rotas")}, aproximados. Rebanho e leite: {fonte_cid("ppm_vacas")} e {fonte_cid("ppm_leite")}. '
+            f'Conferido em <time datetime="{CONF_CID}">{data_br(CONF_CID)}</time>.</p>')
+CIT_CID = [{"@type": "Dataset", "name": FONTES_CID[k][0], "url": FONTES_CID[k][1]} for k in ("ppm_vacas", "ppm_leite")]
+
+
+def migalha3(rotulo, caminho):
+    return {"@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Início", "item": f"{DOM}/"},
+        {"@type": "ListItem", "position": 2, "name": "Entrega e região", "item": f"{DOM}/regiao/"},
+        {"@type": "ListItem", "position": 3, "name": rotulo, "item": f"{DOM}{caminho}"}]}
+
+
+PAGS = [z for z in MUNS if z.get("slug")]
+RS = [z for z in MUNS if z["uf"] == "RS"]
+msg_reg = "Olá! Sou de ___ e quero um orçamento de entrega de silagem ou pré-secado da Estância Safra."
+
+linhas = (f'<tr><th scope="row">{CID} (sede da estância)</th><td>0 km</td><td>-</td><td>-</td><td>{br(ORIG["vacas_ordenhadas"])}</td></tr>' +
+          "".join(f'<tr><th scope="row">{link_cid(z)} ({z["uf"]})</th><td>{br(z["reta_km"], 1)} km</td><td>{z["estrada_km"]} km</td>'
+                  f'<td>{tempo(z["estrada_min"])}</td><td>{br(z["vacas_ordenhadas"])}</td></tr>' for z in MUNS))
+cards = "".join(f'<li><a href="/entrega/{z["slug"]}/"><b>{z["nome"]}</b> · {z["estrada_km"]} km de estrada</a></li>'
+                for z in sorted(PAGS, key=lambda z: z["estrada_km"]))
+ex_rs = sorted(RS, key=lambda z: z["reta_km"])
+FAQ_REG, LD_REG = faq([
+    ("Em quais cidades a Estância Safra entrega silagem?",
+     f"Em {N_MUN} municípios a até {RAIO} km em linha reta de {LOCAL}: " +
+     ", ".join(z["nome"] for z in MUNS if z["uf"] == "SC") + f", em Santa Catarina, e " +
+     ", ".join(z["nome"] for z in ex_rs) + ", no Rio Grande do Sul, além da própria Lindóia do Sul."),
+    ("Como é calculado o frete da entrega?",
+     f"Pela distância até a sua propriedade e pelo tamanho da carga. Mande pelo WhatsApp a cidade, a localidade e a quantidade, e respondemos com o valor. O preço do produto não muda: R$ {PT} a tonelada de silagem e R$ {PB} a bola de pré-secado."),
+    ("Vocês entregam no Rio Grande do Sul?",
+     f"Sim, nos municípios gaúchos dentro do raio, como {ex_rs[0]['nome']}, {ex_rs[1]['nome']} e {ex_rs[2]['nome']}. Eles ficam do outro lado do rio Uruguai, então a estrada é bem mais longa que a linha reta: {ex_rs[0]['nome']} está a {br(ex_rs[0]['reta_km'], 1)} km em linha reta e cerca de {ex_rs[0]['estrada_km']} km de estrada."),
+    (f"E quem está a mais de {RAIO} km?",
+     f"Pode retirar na estância, em {LOCAL}, com o seu caminhão ou freteiro. Peça pelo WhatsApp e confirmamos estoque e horário."),
+])
 reg = f"""
 <div class="heroi"><div class="wrap">
 <div class="txt">
-<p class="migalha"><a href="/">Início</a> › Região e retirada</p>
-<h1>Silagem de milho perto de {CIDADES[0]}, {CIDADES[1]} e {CIDADES[2]} ({UF})</h1>
-<p class="sub">A {NOME} fica em {LOCAL}, no Oeste catarinense. Vendemos silagem de milho e pré-secado de azevém com retirada na estância, para propriedades num raio de cerca de {RAIO} km.</p>
-<div class="acoes">{wa(msg_reg, "heroi-regiao", "Perguntar se compensa para a minha cidade", "bt claro")}<a class="bt linha" href="{F['perfil_google']}" rel="noopener">Abrir no Google Maps</a></div>
+<p class="migalha"><a href="/">Início</a> › Entrega e região</p>
+<h1>Entrega de silagem e pré-secado em até {RAIO} km de {CID}</h1>
+<p class="sub">A {NOME} entrega silagem de milho e pré-secado de azevém em {N_MUN} municípios do Oeste e do Meio-Oeste de Santa Catarina e do Norte do Rio Grande do Sul, a até {RAIO} km em linha reta da estância, em {LOCAL}. O frete é orçado pelo WhatsApp. Quem preferir retira na estância.</p>
+<div class="acoes">{wa(msg_reg, "heroi-regiao", "Pedir orçamento de entrega", "bt claro")}<a class="bt linha" href="{F['perfil_google']}" rel="noopener">Abrir no Google Maps</a></div>
 </div>
 <figure>{img("silos-vista-vale", f"Silos trincheira cobertos na {NOME}, com pasto e mata ao fundo, em {LOCAL}", lazy=False)}<figcaption>Foto real · {LOCAL}, novembro de 2026</figcaption></figure>
 </div></div>
 
 <section><div class="wrap">
-<p class="rot">Por que {RAIO} km</p>
-<h2>O frete decide se a compra vale a pena</h2>
-<p class="lead">Silagem e pré-secado são pesados e têm muita água. Quanto mais longe, mais o frete pesa em cada quilo que chega ao cocho. Pela nossa conta, a compra na {NOME} compensa para quem está a até cerca de {RAIO} km de {LOCAL}.</p>
-<p>Esse raio é uma referência, não uma regra. Quem tem caminhão próprio ou leva carga fechada pode vir de mais longe. Diga a sua cidade e a quantidade pelo WhatsApp e fazemos a conta juntos, somando o frete ao preço de R$ {PT} a tonelada da silagem ou de R$ {PB} a bola do pré-secado.</p>
+<p class="rot">Páginas por cidade</p>
+<h2>Entrega nas cidades com mais procura</h2>
+<p class="lead">Cada página mostra a distância pela estrada, o tempo de viagem e o rebanho leiteiro do município segundo o IBGE.</p>
+<ul class="cidades">{cards}</ul>
 </div></section>
 
 <section><div class="wrap">
-<p class="rot">Municípios próximos</p>
-<h2>Cidades que costumam ficar dentro do raio</h2>
-<div class="duas">
-<div><p>Além de {CID}, estes municípios do Oeste e do Meio-Oeste de Santa Catarina ficam na vizinhança da estância:</p>
-<ul style="margin:16px 0 0 20px;columns:2">{lis}</ul>
-<p>Quem vem de outras regiões de Santa Catarina encontra preço, frete e critérios de compra em <a href="/silagem-a-venda-sc/">silagem à venda em SC</a>.</p>
-<p class="nota">A lista é um ponto de partida. A distância que importa é a da estrada até a sua propriedade: confira a rota no <a href="{F['perfil_google']}" rel="noopener">perfil da estância no Google</a>.</p></div>
-<div>{img("silo-parede-madeira-1", "Silo trincheira com parede de madeira escorada e silos metálicos ao fundo", w=1280, h=960)}</div>
-</div></div></section>
+<p class="rot">Todos os municípios do raio</p>
+<h2>{N_MUN} municípios a até {RAIO} km da estância</h2>
+<p class="lead">Somados, esses municípios têm {br(TOTAL_VACAS)} vacas ordenhadas, segundo a Pesquisa da Pecuária Municipal {PPM_ANO} do IBGE. A tabela vai do mais perto ao mais longe, em linha reta.</p>
+<div class="rolagem"><table>
+<caption>Distância da sede de {LOCAL} até a sede de cada município e rebanho leiteiro ({PPM_ANO}).</caption>
+<thead><tr><th scope="col">Município</th><th scope="col">Linha reta</th><th scope="col">Estrada (aprox.)</th><th scope="col">Tempo de carro</th><th scope="col">Vacas ordenhadas</th></tr></thead>
+<tbody>{linhas}</tbody></table></div>
+{NOTA_CID}
+</div></section>
 
 <section class="escura"><div class="wrap">
-<p class="rot">Retirada</p>
-<h2>Como funciona a retirada na estância</h2>
+<p class="rot">Como funciona</p>
+<h2>Entrega ou retirada, você escolhe</h2>
 <div class="tres">
-<div class="passo"><p class="n">01</p><h3>Confirme o estoque</h3><p>Pelo WhatsApp, diga o produto e a quantidade. Hoje há {T} toneladas de silagem de milho e bolas de pré-secado de azevém.</p></div>
-<div class="passo"><p class="n">02</p><h3>Marque o dia</h3><p>Combinamos dia e horário para o seu caminhão chegar. Sem caminhão, entregamos até cerca de {RAIO} km com frete orçado.</p></div>
-<div class="passo"><p class="n">03</p><h3>Carregue em {CID}</h3><p>A silagem sai da face do silo; o pré-secado sai em bolas fechadas, de cerca de {KG} kg cada.</p></div>
+<div class="passo"><p class="n">01</p><h3>Mande cidade e quantidade</h3><p>Pelo WhatsApp, diga o produto, a quantidade e onde fica a propriedade. Hoje há {T} toneladas de silagem de milho e bolas de pré-secado de azevém.</p></div>
+<div class="passo"><p class="n">02</p><h3>Receba o orçamento do frete</h3><p>O frete sai pela distância até a sua propriedade e pelo tamanho da carga. Sem surpresa: o preço do produto é o publicado no site.</p></div>
+<div class="passo"><p class="n">03</p><h3>Receba ou retire</h3><p>Entregamos no dia combinado. Se preferir, o seu caminhão carrega na estância, em {CID}: a silagem sai da face do silo e o pré-secado em bolas de cerca de {KG} kg.</p></div>
 </div></div></section>
+
+<section><div class="wrap">
+<p class="rot">Perguntas sobre entrega</p>
+<h2>O que perguntam antes de pedir</h2>
+{FAQ_REG}</div></section>
 
 <section><div class="wrap">
 <p class="rot">Preços de hoje</p>
-<h2>O que você encontra ao chegar</h2>
+<h2>Preço na estância, antes do frete</h2>
 {tabela_oferta()}
+<p class="nota">Quem vem de mais longe encontra preço, frete e critérios de compra em <a href="/silagem-a-venda-sc/">silagem à venda em SC</a>.</p>
 </div></section>
-{chamada("Sua cidade está no raio?", "Mande a cidade e a quantidade. Respondemos se compensa.", msg_reg, "chamada-regiao")}
+{chamada("Sua cidade está no raio?", "Mande a cidade e a quantidade. Respondemos com o frete.", msg_reg, "chamada-regiao")}
 """
-pagina("/regiao/", f"Silagem de milho perto de {CIDADES[0]} e região | Estância Safra",
-       f"Silagem de milho e pré-secado de azevém com retirada em {LOCAL}, para produtores de {CIDADES[0]}, {CIDADES[1]}, {CIDADES[2]} e região, até cerca de {RAIO} km.",
-       reg, [NEGOCIO, migalha("Região e retirada", "/regiao/")], msg_reg, f"Retirada em {LOCAL}")
+pagina("/regiao/", f"Entrega de silagem e pré-secado até {RAIO} km de {CID} (SC)",
+       f"Silagem de milho e pré-secado com entrega em {N_MUN} municípios de SC e RS a até {RAIO} km de {CID}: Concórdia, Seara, Xanxerê, Chapecó. Frete orçado.",
+       reg, [NEGOCIO, LD_REG, migalha("Entrega e região", "/regiao/")], msg_reg, f"Entrega até {RAIO} km de {CID}",
+       extra={"citation": CIT_CID})
+
+# ---------------------------------------------------------------- PÁGINAS POR MUNICÍPIO
+FOTOS_CID = ["silo-coberto-eucaliptos", "silagem-face-detalhe", "bolas-pre-secado", "silo-trincheira-lateral",
+             "lona-sacos-araucaria", "silo-lona-araucaria", "silagem-face-parede", "lona-silos-graneleiros"]
+ALT_CID = {"silo-coberto-eucaliptos": "Silo trincheira de silagem de milho coberto com lona e sacos de peso",
+           "silagem-face-detalhe": "Silagem de milho picada e compactada na face aberta do silo",
+           "bolas-pre-secado": "Bolas de pré-secado de azevém embaladas em filme branco",
+           "silo-trincheira-lateral": "Silo trincheira com muro de tijolo e lona presa por sacos",
+           "lona-sacos-araucaria": "Silo coberto com lona e sacos de peso, com araucária ao fundo",
+           "silo-lona-araucaria": "Lona do silo de silagem de milho com araucária ao fundo",
+           "silagem-face-parede": "Silagem de milho compactada junto à parede do silo",
+           "lona-silos-graneleiros": "Silo trincheira coberto com lona, com silos graneleiros ao fundo"}
+ESTADO = {"SC": "Santa Catarina", "RS": "Rio Grande do Sul"}
+
+
+def dist(a, b):
+    import math
+    la1, lo1, la2, lo2 = map(math.radians, (a["lat"], a["lon"], b["lat"], b["lon"]))
+    return 2 * 6371 * math.asin(math.sqrt(math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2))
+
+
+URLS_CID = []
+for i, z in enumerate(sorted(PAGS, key=lambda z: z["estrada_km"])):
+    cam = f'/entrega/{z["slug"]}/'
+    URLS_CID.append(cam)
+    nm, nu = z["nome"], nome_uf(z)
+    viz_pag = sorted([w for w in PAGS if w is not z], key=lambda w: dist(z, w))[:3]
+    viz_out = sorted([w for w in MUNS if w is not z and not w.get("slug")], key=lambda w: dist(z, w))[:4]
+    foto = FOTOS_CID[i % len(FOTOS_CID)]
+    msg = f"Olá! Sou de {nm} ({z['uf']}) e quero um orçamento de entrega de ___ (silagem de milho ou pré-secado)."
+    leite = milhoes_litros(z["leite_mil_litros"])
+    rk = RANK[nm]
+    FAQ_C, LD_C = faq([
+        (f"Vocês entregam silagem em {nm}?",
+         f"Sim. {nu} fica a cerca de {z['estrada_km']} km de estrada de {LOCAL}, dentro do raio de {RAIO} km em que a {NOME} entrega. O frete é orçado pelo WhatsApp conforme a quantidade e o endereço da propriedade."),
+        (f"Qual a distância de {CID} até {nm}?",
+         f"{br(z['reta_km'], 1)} km em linha reta entre as sedes e cerca de {z['estrada_km']} km pela estrada, perto de {tempo(z['estrada_min'])} de carro. Até a sua propriedade, a distância pode ser maior ou menor."),
+        (f"Quanto custa a silagem de milho entregue em {nm}?",
+         f"R$ {PT} a tonelada na estância, mais o frete até {nm}. O frete é orçado pela distância e pela carga: quanto mais toneladas na mesma viagem, menor o frete por tonelada."),
+        (f"Tem pré-secado de azevém para entregar em {nm}?",
+         f"Sim. São bolas de cerca de {KG} kg ({KMIN} a {KMAX} kg), embaladas em filme, a R$ {PB} cada na estância. Diga quantas bolas pelo WhatsApp e orçamos a entrega em {nm}."),
+    ])
+    corpo = f"""
+<div class="heroi"><div class="wrap">
+<div class="txt">
+<p class="migalha"><a href="/">Início</a> › <a href="/regiao/">Entrega e região</a> › {nm}</p>
+<h1>Silagem de milho e pré-secado com entrega em {nu}</h1>
+<p class="sub">A {NOME} fica em {LOCAL}, a {br(z['reta_km'], 1)} km em linha reta da sede de {nm}: cerca de {z['estrada_km']} km e {tempo(z['estrada_min'])} pela estrada. Entregamos silagem de milho e pré-secado de azevém em {nm} com frete orçado pelo WhatsApp, ou você retira na estância.</p>
+<div class="acoes">{wa(msg, "heroi-" + z["slug"], f"Pedir orçamento para {nm}", "bt claro")}<a class="bt linha" href="/regiao/">Ver todas as cidades</a></div>
+</div>
+<figure>{img(foto, f"{ALT_CID[foto]}, na {NOME}, em {LOCAL}", lazy=False)}<figcaption>Foto real · {LOCAL}</figcaption></figure>
+</div></div>
+
+<section><div class="wrap">
+<p class="rot">{nm} em números</p>
+<h2>Distância, preço e rebanho de {nm}</h2>
+<div class="rolagem"><table>
+<caption>Entrega da {NOME} em {nu}. Preços atualizados em {DATA_HTML}.</caption>
+<tbody>
+<tr><th scope="row">Distância em linha reta</th><td>{br(z['reta_km'], 1)} km entre as sedes</td></tr>
+<tr><th scope="row">Pela estrada</th><td>Cerca de {z['estrada_km']} km, {tempo(z['estrada_min'])} de carro</td></tr>
+<tr><th scope="row">Silagem de milho</th><td><b>R$ {PT} a tonelada</b> na estância, {T} toneladas disponíveis</td></tr>
+<tr><th scope="row">Pré-secado de azevém</th><td><b>R$ {PB} a bola</b> de cerca de {KG} kg</td></tr>
+<tr><th scope="row">Frete até {nm}</th><td>Orçado pelo WhatsApp, pela distância e pela carga</td></tr>
+<tr><th scope="row">Vacas ordenhadas em {nm}</th><td>{br(z['vacas_ordenhadas'])} cabeças, o {'' if rk == 1 else f'{rk}º '}maior rebanho entre os {N_MUN} municípios do raio (IBGE, {PPM_ANO})</td></tr>
+<tr><th scope="row">Leite produzido em {nm}</th><td>{leite} em {PPM_ANO} (IBGE)</td></tr>
+</tbody></table></div>
+{NOTA_CID}
+</div></section>
+
+<section><div class="wrap">
+<p class="rot">Quanto custa entregue</p>
+<h2>Silagem entregue em {nm}: preço mais frete</h2>
+<p class="lead">O preço do produto é o mesmo para todos: R$ {PT} a tonelada de silagem de milho e R$ {PB} a bola de pré-secado. Entregue em {nm}, soma-se o frete de uma viagem de cerca de {z['estrada_km']} km, dividido pelas toneladas da carga.</p>
+<p>Para comparar com outra oferta, faça a conta por tonelada entregue na <a href="/silagem-a-venda-sc/#frete">calculadora de frete</a>, ou veja o preço por quilo do <a href="/pre-secado-a-venda/">pré-secado à venda</a>. Se tiver caminhão, a retirada em {CID} sai sem frete.</p>
+</div></section>
+
+<section><div class="wrap">
+<p class="rot">Perguntas de quem é de {nm}</p>
+<h2>Entrega em {nm}: dúvidas comuns</h2>
+{FAQ_C}</div></section>
+
+<section><div class="wrap">
+<p class="rot">Vizinhos de {nm}</p>
+<h2>Também entregamos perto de {nm}</h2>
+<p>{", ".join(link_cid(w) + f" ({w['uf']})" for w in viz_pag)} têm página própria. Na mesma região também atendemos {", ".join(nome_uf(w) for w in viz_out[:-1])} e {nome_uf(viz_out[-1])}. Veja a <a href="/regiao/">lista completa dos {N_MUN} municípios</a>.</p>
+</div></section>
+{chamada(f"Entrega em {nm}", f"Diga o produto e a quantidade. Respondemos com o frete até {nm}.", msg, "chamada-" + z["slug"])}
+"""
+    servico = {"@type": "Service", "@id": f"{DOM}{cam}#entrega", "name": f"Entrega de silagem de milho e pré-secado em {nu}",
+               "serviceType": "Entrega de volumoso para alimentação animal", "provider": {"@id": f"{DOM}/#estancia"},
+               "areaServed": {"@type": "City", "name": f"{nm}, {z['uf']}",
+                              "geo": {"@type": "GeoCoordinates", "latitude": z["lat"], "longitude": z["lon"]},
+                              "containedInPlace": {"@type": "State", "name": ESTADO[z["uf"]]}},
+               "offers": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL"},
+                          {"@type": "Offer", "itemOffered": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "price": P["preco_bola"], "priceCurrency": "BRL"}]}
+    titulo = f"Silagem de milho com entrega em {nu}"
+    pagina(cam, titulo + (" | Estância Safra" if len(titulo) < 44 else ""),
+           f"Silagem de milho a R$ {PT}/t e pré-secado a R$ {PB}/bola com entrega em {nu}, a cerca de {z['estrada_km']} km de {CID}. Frete orçado no WhatsApp.",
+           corpo, [NEGOCIO, servico, LD_C, migalha3(nm, cam)], msg, f"Entrega em {nm}", extra={"citation": CIT_CID})
 
 # ---------------------------------------------------------------- CONTATO
 msg_con = "Olá! Quero comprar volumoso da Estância Safra."
@@ -1015,7 +1190,7 @@ for f in (SRC / "fotos").iterdir():
     if not alvo.exists() or alvo.stat().st_size != f.stat().st_size:
         shutil.copyfile(f, alvo)
 
-urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/silagem-a-venda-sc/", "/pre-secado-a-venda/", "/regiao/", "/contato/", "/privacidade/"]
+urls = ["/", "/silagem-de-milho/", "/pre-secado-de-azevem/", "/silagem-a-venda-sc/", "/pre-secado-a-venda/", "/regiao/"] + URLS_CID + ["/contato/", "/privacidade/"]
 
 
 LASTMOD = {u: max(GUIAS_EM, F["atualizado_em"]) for u in ("/silagem-a-venda-sc/", "/pre-secado-a-venda/")}
@@ -1049,9 +1224,13 @@ def imgs_da(u):
 - [Pré-secado de azevém]({DOM}/pre-secado-de-azevem/): preço por bola e por quilo, peso, vídeo, comparação com a silagem.
 - [Silagem à venda em SC]({DOM}/silagem-a-venda-sc/): onde comprar silagem de milho em Santa Catarina, custo com frete, como avaliar antes de comprar e quanto tempo dura fora do silo, com fontes da Embrapa.
 - [Pré-secado à venda]({DOM}/pre-secado-a-venda/): quanto custa e quanto pesa uma bola, comparador de preço por quilo, diferença para feno e silagem, como avaliar e guardar as bolas.
-- [Região e retirada]({DOM}/regiao/): municípios próximos e como funciona a retirada.
+- [Entrega e região]({DOM}/regiao/): os {N_MUN} municípios atendidos a até {RAIO} km, com distância, tempo de estrada e rebanho leiteiro (IBGE), e como funciona entrega e retirada.
 - [Contato]({DOM}/contato/): pedido pelo WhatsApp.
 - [Política de privacidade]({DOM}/privacidade/): o que o site coleta (Google Analytics) e direitos pela LGPD.
+
+## Entrega por município
+""" + "".join(f"- [Silagem e pré-secado com entrega em {nome_uf(z)}]({DOM}/entrega/{z['slug']}/): cerca de {z['estrada_km']} km de estrada de {CID}.\n" for z in sorted(PAGS, key=lambda z: z["estrada_km"])) + f"""
+Também há entrega em: {", ".join(nome_uf(z) for z in MUNS if not z.get("slug"))}.
 """, encoding="utf-8")
 
 # verificação de Search Console, Bing e chave do IndexNow (arquivos na raiz)

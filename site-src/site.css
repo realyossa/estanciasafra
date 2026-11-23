@@ -245,3 +245,7 @@ footer.rod .prova .estrelas{display:block;font-size:17px;margin-bottom:2px}
 .texto ul{padding-left:22px;margin-bottom:12px}
 .texto code{font-size:.9em;background:var(--pasto);padding:1px 5px;border-radius:4px}
 .fontes{padding-left:22px;font-size:16px}.fontes li{margin-bottom:8px}.fontes a{color:var(--verde)}
+.cidades{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:20px}
+.cidades a{display:block;padding:14px 16px;background:#fff;border:1px solid rgba(47,58,54,.12);border-radius:var(--raio);text-decoration:none;color:var(--cinza)}
+.cidades a b{color:var(--profundo)}
+.cidades a:hover{border-color:var(--profundo)}
