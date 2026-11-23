@@ -27,7 +27,7 @@
       var t = a * k * d / 1000;
       var preco = t >= minimo ? cheio : menor;
       var nc = carga && t >= minimo ? Math.ceil(t / carga) : 0;
-      var cargas = nc ? ', ou ' + nc + (nc > 1 ? ' cargas' : ' carga') + ' de ' + num(carga, 0) + ' t' : '';
+      var cargas = nc > 1 ? ', ou ' + nc + ' cargas de ' + num(carga, 0) + ' t' : (nc ? ', ou 1 carga' : '');
       var abaixo = t > 0 && t < minimo ? ' Abaixo de ' + num(minimo, 0) + ' t a tonelada sai a R$ ' + num(menor, 0) + ' e o pedido depende de disponibilidade.' : '';
       var aviso = t > estoque ? '<p><b>Passa do estoque de hoje (' + num(estoque, 0) + ' t).</b> Fale com a gente para ver o que dá para atender.</p>' : '';
       out.innerHTML = '<div class="num">' + num(t, 1) + ' <small>toneladas</small></div>' +

@@ -66,8 +66,8 @@ def tempo(minutos):
 
 
 def cargas(t):
-    n = -(-t // C2)
-    return f"{int(n)} carga{'s' if n > 1 else ''} de {C2} t"
+    n = int(-(-t // C2))
+    return f"{n} cargas de {C2} t" if n > 1 else "1 carga"
 
 
 def preco_t(t):
@@ -78,7 +78,7 @@ SPEC_SIL = [  # as duas faixas de preço da silagem, para máquinas
     {"@type": "UnitPriceSpecification", "price": S["preco_tonelada"], "priceCurrency": "BRL", "unitCode": "TNE", "unitText": "tonelada",
      "eligibleQuantity": {"@type": "QuantitativeValue", "minValue": MIN, "unitCode": "TNE"}},
     {"@type": "UnitPriceSpecification", "price": S["preco_tonelada_menor"], "priceCurrency": "BRL", "unitCode": "TNE", "unitText": "tonelada",
-     "eligibleQuantity": {"@type": "QuantitativeValue", "maxValue": MIN, "unitCode": "TNE"},
+     "eligibleQuantity": {"@type": "QuantitativeValue", "maxValue": MIN - 0.01, "unitCode": "TNE"},
      "description": f"Pedidos abaixo de {MIN} t, sob consulta de disponibilidade"}]
 PRECO_REGRA = f"R$ {PT} a tonelada a partir de {MIN} t; abaixo de {MIN} t, R$ {PTM} a tonelada, sob consulta de disponibilidade"
 
@@ -156,6 +156,10 @@ VERIF = ((f'<meta name="google-site-verification" content="{V["google_meta"]}">\
 
 def pagina(caminho, title, desc, corpo, grafo, barra_msg, barra_txt, og="og.jpg", extra=None):
     url = f"{DOM}{caminho}"
+    par = f" ({RAIO} km em linha reta)"
+    if par in corpo:
+        k = corpo.index(par) + len(par)
+        corpo = corpo[:k] + corpo[k:].replace(par, "")
     atual = ' aria-current="page"'
     nav = "".join(f'<a href="{h}"{atual if h == caminho else ""}>{t}</a>' for h, t in NAV)
     mh = re.search(r'<img src="([^"]+)"(?: srcset="([^"]+)" sizes="([^"]+)")?[^>]*fetchpriority="high"', corpo)
@@ -278,8 +282,6 @@ FAQ_HOME, LD_HOME = faq([
      f"Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada em {MESANO} para pedidos a partir de {MIN} t, a carga fechada de um caminhão, o que dá R$ {PKG} por quilo. Abaixo de {MIN} t, a tonelada sai a R$ {PTM} e o pedido depende de disponibilidade. O valor é para retirada na estância e não inclui frete."),
     (f"Vocês entregam?",
      f"Sim, {ALC} de {LOCAL}. O frete é orçado pelo WhatsApp conforme a distância até a sua propriedade e o tamanho da carga. {REGRA_ENTREGA} Quem tem caminhão também pode retirar na estância."),
-    (f"Quanto custa uma carga fechada de silagem de milho?",
-     f"Uma carga fechada de {CARGA} de silagem de milho custa de R$ {PC1} a R$ {PC2} na {NOME}, a R$ {PT} a tonelada, sem frete. <a href=\"/carga-de-silagem/\">Veja o preço por carga e quantas cargas o seu rebanho precisa</a>."),
     (f"Qual o pedido mínimo de silagem?",
      f"O pedido ideal é a carga fechada de um caminhão, de {CARGA}, a R$ {PT} a tonelada. Abaixo de {MIN} t, a tonelada sai a R$ {PTM} e o pedido depende de disponibilidade: consulte pelo WhatsApp. O pré-secado é vendido por bola."),
     (f"Tem análise bromatológica?",
@@ -318,7 +320,7 @@ home = f"""
 <article class="cartao"><div class="foto">{img("silagem-face-detalhe", "Face do silo aberta mostrando a silagem de milho picada e compactada", sizes="(min-width:901px) 540px, 100vw")}</div>
 <div class="corpo"><h3><a href="/silagem-de-milho/">Silagem de milho</a></h3>
 <p class="preco">R$ {PT} <small>por tonelada a partir de {MIN} t · R$ {PKG} o kg</small></p>
-<p>{T} toneladas em silos trincheira cobertos com lona e sacos de peso. Vendida por tonelada, na quantidade que você precisar.</p>
+<p>{T} toneladas em silos trincheira cobertos com lona e sacos de peso. Vendida por tonelada; o pedido ideal é a carga fechada de {CARGA}. Abaixo de {MIN} t, sob consulta.</p>
 <a class="bt" href="/silagem-de-milho/">Ver a silagem de milho</a></div></article>
 <article class="cartao"><div class="foto">{img("bolas-pre-secado", "Bolas de pré-secado de azevém embaladas em filme branco, armazenadas entre muros de tijolo", sizes="(min-width:901px) 540px, 100vw")}</div>
 <div class="corpo"><h3><a href="/pre-secado-de-azevem/">Pré-secado de azevém</a></h3>
@@ -364,7 +366,7 @@ home = f"""
 {chamada("Precisa de volumoso perto de " + CID + "?", f'Entregamos em {N_ENT} municípios a até {EMAX} km de estrada, como Concórdia, Seara, Xanxerê e Chapecó. <a href="/regiao/" style="color:inherit">Ver as cidades</a>.', msg_home, "chamada-home")}
 """
 NEGOCIO_HOME = {**NEGOCIO, "knowsAbout": ["silagem de milho", "pré-secado de azevém", "volumoso para gado"],
-                "makesOffer": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL"},
+                "makesOffer": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL", "priceSpecification": SPEC_SIL},
                                {"@type": "Offer", "itemOffered": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "price": P["preco_bola"], "priceCurrency": "BRL"}]}
 pagina("/", f"Silagem de milho à venda em {LOCAL} | Estância Safra",
        f"{T} t de silagem de milho a R$ {PT} a tonelada em carga fechada de {C1} a {C2} t e pré-secado a R$ {PB} a bola. Entrega até {EMAX} km de estrada.",
@@ -380,13 +382,15 @@ FAQ_SIL, LD_SIL = faq([
     (f"Quanto custa a tonelada de silagem de milho em Santa Catarina?",
      f"Na {NOME}, em {LOCAL}, a tonelada de silagem de milho custa R$ {PT} em {MESANO}, ou R$ {PKG} por quilo, para pedidos a partir de {MIN} t e retirada no local; abaixo de {MIN} t, R$ {PTM}, sob consulta. Este é o preço desta propriedade, não uma média do estado: o valor muda de região para região e de safra para safra."),
     (f"Vale a pena comprar silagem de longe?",
-     f"Depende do frete. Silagem é um produto pesado e úmido, então o transporte pesa no custo final por quilo. Na {NOME}, a entrega vai {ALC} de {LOCAL}, e compensa mais em carga fechada de {CARGA}, porque o frete se divide por mais toneladas. Acima disso, peça o frete antes e some ao preço da tonelada."),
+     f"Depende do frete. Silagem é um produto pesado e úmido, então o transporte pesa no custo final por quilo. Na {NOME}, a entrega vai {ALC} de {LOCAL}, e compensa mais em carga fechada de {CARGA}, porque o frete se divide por mais toneladas. Mais longe que {EMAX} km de estrada, peça o frete antes e some ao preço da tonelada."),
     (f"Vocês entregam a silagem?",
      f"Sim, {ALC} de {LOCAL}, com frete orçado pelo WhatsApp conforme a distância e as toneladas. {REGRA_ENTREGA} Quem tem caminhão pode retirar direto no silo."),
-    (f"Quanto custa um caminhão de silagem de milho?",
-     f"Na {NOME}, a carga fechada de {CARGA} custa de R$ {PC1} a R$ {PC2}, a R$ {PT} a tonelada, sem frete. O estoque de {T} toneladas equivale a {N_CARGAS} cargas de {C2} t. <a href=\"/carga-de-silagem/\">Veja o preço por carga</a>."),
     (f"A silagem tem análise bromatológica?",
      f"{BROMA}"),
+    ("Quanto de silagem de milho uma vaca come por dia?",
+     "Para planejar o silo, a Embrapa usa 30 kg de silagem por vaca por dia (<a href=\"https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1039523/1/25971.pdf\" rel=\"noopener\">Embrapa Acre, 2015</a>). "
+     "Outra publicação da Embrapa fala em 25 a 35 kg por animal adulto por dia, conforme a raça e a produção, e de 10 a 30 kg por cabeça conforme a categoria, menos para bezerros e novilhas e mais para vacas em lactação "
+     "(<a href=\"https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/900615/1/Instalacoeszootecnicas.pdf\" rel=\"noopener\">Embrapa Amazônia Oriental, 2004</a>). O número da sua dieta é o do seu técnico."),
     (f"Posso comprar menos de {MIN} toneladas?",
      f"Pode, sob consulta. Abaixo de {MIN} t a tonelada sai a R$ {PTM}, e o pedido depende de disponibilidade: pergunte pelo WhatsApp antes. "
      f"A partir de {MIN} t, a carga fechada de um caminhão, vale o preço de R$ {PT} a tonelada."),
@@ -438,7 +442,7 @@ sil = f"""
 <div class="campo"><label for="kg">Kg por animal/dia</label><input id="kg" name="kg" type="number" inputmode="decimal" min="1" step="0.5" value="30"></div>
 <div class="campo"><label for="dias">Dias</label><input id="dias" name="dias" type="number" inputmode="numeric" min="1" value="90"></div>
 </div>
-<p class="nota">Os valores iniciais são só um exemplo. O consumo por animal muda com a categoria, o peso e o resto da dieta: use o número indicado pelo seu técnico ou nutricionista.</p>
+<p class="nota">Os valores iniciais são só um exemplo. Para planejar, a Embrapa usa 30 kg de silagem por vaca por dia (<a href="https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1039523/1/25971.pdf" rel="noopener">Embrapa Acre, 2015</a>), mas o consumo muda com a categoria, o peso e o resto da dieta: use o número indicado pelo seu técnico ou nutricionista.</p>
 </form>
 <div class="saida" id="calc-saida" aria-live="polite">
 <div class="num">135 <small>toneladas</small></div>
@@ -491,7 +495,7 @@ FAQ_PRE, LD_PRE = faq([
     (f"Posso comprar poucas bolas?",
      f"Sim, a venda é por unidade. Diga pelo WhatsApp quantas bolas você quer e combinamos a retirada."),
     (f"Vocês entregam?",
-     f"Sim, {ALC} de {LOCAL}. O frete é orçado pelo WhatsApp conforme a distância e o número de bolas. Em carga fechada, {C1} a {C2} toneladas são de {C1 * 1000 // P['peso_bola_kg']} a {C2 * 1000 // P['peso_bola_kg']} bolas de cerca de {KG} kg. Também dá para retirar na estância."),
+     f"Sim, {ALC} de {LOCAL}. O frete é orçado pelo WhatsApp conforme a distância e o número de bolas. Também dá para retirar na estância."),
     (f"Tem análise bromatológica do pré-secado?",
      f"{BROMA}"),
 ])
@@ -592,6 +596,12 @@ FONTES = {
                 "https://teagasc.ie/wp-content/uploads/2025/05/BaleHandling.pdf"),
     "aces": ("Alabama Cooperative Extension System, Kim Mullenix, 2018",
              "https://www.aces.edu/blog/topics/beef/strategies-for-using-baleage-in-beef-cattle-operations/"),
+    "acre": ("Embrapa Acre, Os Dez Passos da Ensilagem (2015)",
+             "https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1039523/1/25971.pdf"),
+    "instal": ("Embrapa Amazônia Oriental, Instalações zootécnicas visando a produção de silagem (2004)",
+               "https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/900615/1/Instalacoeszootecnicas.pdf"),
+    "ct114": ("Embrapa Gado de Leite, Comunicado Técnico 114: Tecnologia e custo da silagem de milho (2017)",
+              "https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1078472/1/CT114Tecnologiaecustosilagemdemilho.pdf"),
     "azevem": ("Epagri e Embrapa Pecuária Sul, Baldissera e outros (2018)",
                "https://www.alice.cnptia.embrapa.br/alice/handle/doc/1100511"),
 }
@@ -622,7 +632,7 @@ FONTES_SC = ["ct74", "folder", "unoesc", "pab", "cepa"]
 FAQ_SC, LD_SC = faq([
     ("Onde comprar silagem de milho em Santa Catarina?",
      f"A {NOME} vende silagem de milho em {LOCAL}, no Oeste catarinense: {T} toneladas a R$ {PT} a tonelada em {MESANO}, com retirada no silo. "
-     f"A entrega vai {ALC}, como {CID_TXT}, e compensa mais em carga fechada de {CARGA} (R$ {PC1} a R$ {PC2} por carga, sem frete)."),
+     f"A entrega vai {ALC}, em cidades como {CID_TXT}, e compensa mais em carga fechada de {CARGA} (R$ {PC1} a R$ {PC2} por carga, sem frete)."),
     ("Qual o preço da tonelada de silagem em SC?",
      f"Não existe preço oficial da silagem em Santa Catarina: cada vendedor define o seu, e o valor muda com a safra e com a região. "
      f"Na {NOME}, em {LOCAL}, a silagem de milho custa R$ {PT} a tonelada (R$ {PKG} o quilo) em {MESANO} para pedidos a partir de {MIN} t, sem frete. Abaixo de {MIN} t, R$ {PTM}, sob consulta."),
@@ -647,7 +657,7 @@ sc = f"""
 <p class="migalha"><a href="/">Início</a> › Silagem à venda em SC</p>
 <p class="pill"><i></i><span>{T} t disponíveis · atualizado em {DATA_HTML}</span></p>
 <h1>Silagem à venda em SC: onde comprar, quanto custa com frete e como avaliar</h1>
-<p class="sub">A {NOME} vende silagem de milho a granel, por tonelada, em {LOCAL}. Em {MESANO} são {T} toneladas a R$ {PT} a tonelada, com retirada no silo ou entrega {ALC}, como {CIDADES[0]}, {CIDADES[1]} e {CIDADES[2]}.</p>
+<p class="sub">A {NOME} vende silagem de milho a granel, por tonelada, em {LOCAL}. Em {MESANO} são {T} toneladas a R$ {PT} a tonelada a partir de {MIN} t, com retirada no silo ou entrega {ALC}, em cidades como {CIDADES[0]}, {CIDADES[1]} e {CIDADES[2]}.</p>
 <div class="selos">
 <div><b>R$ {PT}</b><span>a tonelada, sem frete</span></div>
 <div><b>{T} t</b><span>em estoque em {MESANO}</span></div>
@@ -672,7 +682,7 @@ sc = f"""
 <tr><th scope="row">Forma de venda</th><td>A granel, por tonelada, carregada da face do silo</td></tr>
 <tr><th scope="row">Carga fechada</th><td><a href="/carga-de-silagem/">{CARGA} por caminhão, R$ {PC1} a R$ {PC2}</a></td></tr>
 <tr><th scope="row">Retirada</th><td>No silo, em dia e horário combinados. Entrega {ALC}, com frete orçado</td></tr>
-<tr><th scope="row">Cidades atendidas</th><td>{CID_TXT}, entre outras {N_ENT} cidades a até {EMAX} km de estrada</td></tr>
+<tr><th scope="row">Cidades atendidas</th><td>{CID_TXT}, entre os {N_ENT} municípios a até {EMAX} km de estrada</td></tr>
 <tr><th scope="row">Análise bromatológica</th><td>Em andamento; o laudo será publicado na <a href="/silagem-de-milho/">página da silagem de milho</a></td></tr>
 </tbody></table></div>
 <p class="nota">Detalhes da oferta, fotos dos silos e a calculadora de toneladas por rebanho estão na página <a href="/silagem-de-milho/">silagem de milho a R$ {PT} a tonelada</a>.</p>
@@ -689,7 +699,7 @@ sc = f"""
 <div class="campo"><label for="viagem">Frete da viagem (R$)</label><input id="viagem" name="viagem" type="number" inputmode="decimal" min="0" step="10" value="{FRETE_RS}"></div>
 <div class="campo"><label for="cargas">Número de viagens</label><input id="cargas" name="cargas" type="number" inputmode="numeric" min="1" value="1"></div>
 </div>
-<p class="nota">Os valores iniciais são só um exemplo: a {NOME} não define nem cobra o frete. Silagem é pesada e úmida, então quanto mais longe, mais o frete pesa em cada tonelada.</p>
+<p class="nota">Os valores iniciais são só um exemplo, não o frete da {NOME}, que é orçado pelo WhatsApp. Silagem é pesada e úmida, então quanto mais longe, mais o frete pesa em cada tonelada.</p>
 </form>
 <div class="saida" id="frete-saida" aria-live="polite">
 <div class="num">R$ {br(S['preco_tonelada'] + FRETE_POR_T, 2)} <small>por tonelada entregue</small></div>
@@ -724,7 +734,7 @@ sc = f"""
 <caption>Perguntas para fazer ao vendedor de silagem e as respostas da {NOME}, {LOCAL}. Atualizado em {DATA_HTML}.</caption>
 <thead><tr><th scope="col">Pergunta</th><th scope="col">Por que importa</th><th scope="col">Na {NOME}</th></tr></thead>
 <tbody>
-<tr><th scope="row">Qual o preço por tonelada, e a partir de quantas toneladas?</th><td>Muitos vendedores têm preço diferente para carga fechada e para pouca quantidade.</td><td>{PRECO_REGRA[0].upper() + PRECO_REGRA[1:]}.</td></tr>
+<tr><th scope="row">Qual o preço por tonelada, e a partir de quantas toneladas?</th><td>O preço pode mudar com a quantidade pedida.</td><td>{PRECO_REGRA[0].upper() + PRECO_REGRA[1:]}.</td></tr>
 <tr><th scope="row">Quanto cabe num caminhão?</th><td>A silagem enche a carroceria antes do limite de peso: é a cubagem que define a carga.</td><td>Em geral {CARGA} por caminhão: <a href="/carga-de-silagem/">R$ {PC1} a R$ {PC2} por carga</a>.</td></tr>
 <tr><th scope="row">Entrega? Até onde?</th><td>O frete pode pesar mais que a diferença de preço entre dois vendedores.</td><td>Entrega {ALC}, com frete orçado. <a href="/regiao/">Ver as cidades</a>.</td></tr>
 <tr><th scope="row">Quanto tem em estoque?</th><td>Quem precisa de várias cargas quer saber se o vendedor atende a estação.</td><td>{T} toneladas em {MESANO}, ou {N_CARGAS} cargas de {C2} t.</td></tr>
@@ -767,7 +777,7 @@ sc = f"""
 {chamada(f"{T} toneladas em {CID}, R$ {PT} a tonelada", f"Diga a sua cidade em SC e quantas toneladas precisa. Confirmamos o estoque na hora.", msg_sc, "chamada-silagem-sc")}
 """
 pagina("/silagem-a-venda-sc/", "Silagem à venda em SC: preço com frete e como avaliar",
-       f"Silagem de milho à venda em SC: {T} t a R$ {PT} a tonelada em {LOCAL}. Some o frete, veja como avaliar a silagem e as cidades atendidas.",
+       f"Silagem de milho à venda em SC: {T} t a R$ {PT}/t a partir de {MIN} t em {LOCAL}. Some o frete, veja como avaliar a silagem e as cidades atendidas.",
        sc, [NEGOCIO, LD_SC, migalha("Silagem à venda em SC", "/silagem-a-venda-sc/")],
        msg_sc, f"Silagem em SC · R$ {PT} a tonelada", og="og-silagem.jpg",
        extra={"datePublished": GUIAS_EM, "dateModified": max(GUIAS_EM, F["atualizado_em"]), "mainEntity": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "citation": citacoes(FONTES_SC),
@@ -775,7 +785,7 @@ pagina("/silagem-a-venda-sc/", "Silagem à venda em SC: preço com frete e como 
 
 # ---------------------------------------------------------------- CARGA FECHADA DE SILAGEM (comprador de caminhão)
 CARGA_EM = "2026-11-23"                         # data de publicação da página
-FONTES_CG = ["unoesc", "pab", "ct74"]
+FONTES_CG = ["unoesc", "pab", "ct74", "ct114", "acre", "instal"]
 msg_cg = f"Olá! Vi no site a carga fechada de silagem de milho ({CARGA}). Sou de ___ e preciso de ___ cargas."
 EX_A, EX_K, EX_D = 100, 30, 180                  # exemplo da calculadora (não é recomendação de dieta)
 EX_T = EX_A * EX_K * EX_D / 1000
@@ -805,8 +815,8 @@ FAQ_CG, LD_CG = faq([
     (f"E se eu precisar de menos de {MIN} toneladas?",
      f"Dá, sob consulta. Abaixo de {MIN} t a tonelada sai a R$ {PTM}, e não R$ {PT}, e o pedido depende de disponibilidade. Pergunte pelo WhatsApp antes de vir."),
     ("Quanto tempo dura uma carga de silagem para gado de leite?",
-     f"Pouco tempo. Exemplo: 50 vacas comendo {EX_K} kg de silagem por dia consomem {br(50 * EX_K / 1000, 1)} t por dia, então uma carga de {C2} t dura cerca de {round(C2 * 1000 / (50 * EX_K))} dias. "
-     f"Quem tem gado de leite costuma precisar de várias cargas por estação: use a calculadora desta página com o consumo indicado pelo seu técnico."),
+     f"Pouco tempo. Exemplo: 50 vacas comendo {EX_K} kg de silagem por dia, a referência de planejamento da Embrapa, consomem {br(50 * EX_K / 1000, 1)} t por dia, então uma carga de {C2} t dura cerca de {round(C2 * 1000 / (50 * EX_K))} dias. "
+     f"Para saber quantas cargas o rebanho pede na estação, use a calculadora desta página com o consumo indicado pelo seu técnico."),
     ("Vocês entregam a carga de silagem?",
      f"Sim, {ALC} de {LOCAL}, com frete orçado pelo WhatsApp conforme a distância. {REGRA_ENTREGA} "
      f"Nos municípios que passam de {EMAX} km pela estrada, a entrega é sob consulta."),
@@ -871,7 +881,7 @@ cg = f"""
 <div class="campo"><label for="kg">Kg por animal/dia</label><input id="kg" name="kg" type="number" inputmode="decimal" min="1" step="0.5" value="{EX_K}"></div>
 <div class="campo"><label for="dias">Dias</label><input id="dias" name="dias" type="number" inputmode="numeric" min="1" value="{EX_D}"></div>
 </div>
-<p class="nota">Os valores iniciais são só um exemplo. O consumo por animal muda com a categoria, o peso e o resto da dieta: use o número indicado pelo seu técnico ou nutricionista.</p>
+<p class="nota">Os valores iniciais são só um exemplo. Para planejar, a Embrapa usa 30 kg de silagem por vaca por dia (<a href="https://www.infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1039523/1/25971.pdf" rel="noopener">Embrapa Acre, 2015</a>), mas o consumo muda com a categoria, o peso e o resto da dieta: use o número indicado pelo seu técnico ou nutricionista.</p>
 </form>
 <div class="saida" id="calc-saida" aria-live="polite">
 <div class="num">{br(EX_T)} <small>toneladas</small></div>
@@ -908,6 +918,7 @@ cg = f"""
 <div>{img("silo-parede-madeira-1", f"Silo trincheira de parede de madeira escorada, com silos graneleiros ao fundo, na {NOME}", w=1280, h=960, sizes="(min-width:901px) 540px, 100vw")}</div>
 <div><p>Reensilar depois de 36 horas no ar reduziu o valor nutritivo e aumentou as perdas de matéria seca, segundo a Pesquisa Agropecuária Brasileira ({fonte("pab", "PAB, 2018")}). Por isso, combine o dia da carga com o dia em que você vai compactar e cobrir com lona.</p>
 <p>A Embrapa estima em até 15% a perda por deterioração depois que a silagem sai do silo e a classifica como evitável ({fonte("ct74", "Embrapa, 2014")}). Na carga fechada, a {NOME} carrega a silagem direto da face do silo, para ela sair da estância com o mínimo de tempo no ar.</p>
+<p>Para reensilar, a Embrapa recomenda, na ensilagem, camadas de no máximo 20 cm bem compactadas e lona de pelo menos 200 micras, com pesos por cima ({fonte("ct114", "Comunicado Técnico 114, 2017")}). Faça isso no mesmo dia em que a carga chega.</p>
 <p>Como avaliar a silagem antes de carregar: veja <a href="/silagem-a-venda-sc/">silagem à venda em SC</a>.</p></div>
 </div>
 </div></section>
@@ -931,7 +942,7 @@ oferta_cg = {"@type": "Offer", "@id": f"{DOM}/carga-de-silagem/#oferta", "name":
              "itemOffered": prod_ref, "price": S["preco_tonelada"], "priceCurrency": "BRL", "availability": "https://schema.org/InStock",
              "priceSpecification": SPEC_SIL,
              "inventoryLevel": {"@type": "QuantitativeValue", "value": S["toneladas"], "unitCode": "TNE"},
-             "availableDeliveryMethod": "https://schema.org/OnSitePickup", "seller": {"@id": f"{DOM}/#estancia"}, "areaServed": NEGOCIO["areaServed"]}
+             "availableDeliveryMethod": ["https://schema.org/OnSitePickup", "http://purl.org/goodrelations/v1#DeliveryModeFreight"], "seller": {"@id": f"{DOM}/#estancia"}, "areaServed": NEGOCIO["areaServed"]}
 pagina("/carga-de-silagem/", "Carga de silagem de milho: preço do caminhão fechado",
        f"Quanto custa uma carga de silagem de milho: {C1} a {C2} t por caminhão, R$ {PC1} a R$ {PC2} em {LOCAL}, sem frete. Entrega até {EMAX} km de estrada.",
        cg, [NEGOCIO, oferta_cg, LD_CG, migalha("Carga fechada de silagem", "/carga-de-silagem/")],
@@ -1140,10 +1151,10 @@ FAQ_REG, LD_REG = faq([
      ", ".join(z["nome"] for z in MUNS_E if z["uf"] == "SC") + f", em Santa Catarina, e " +
      ", ".join(z["nome"] for z in ex_rs) + ", no Rio Grande do Sul, além da própria Lindóia do Sul. " +
      f"Em {', '.join(z['nome'] for z in MUNS_C[:-1])} e {MUNS_C[-1]['nome']}, que passam de {EMAX} km pela estrada, a entrega é sob consulta."),
-    ("A entrega é em carga fechada?",
-     f"{REGRA_ENTREGA} Uma carga de {CARGA} de silagem de milho custa de R$ {PC1} a R$ {PC2} na estância, mais o frete. <a href=\"/carga-de-silagem/\">Veja quanto custa a carga fechada</a>."),
+    ("A entrega é só em carga fechada?",
+     f"Não, mas é o pedido ideal. A partir de {MIN} t a tonelada sai a R$ {PT}; abaixo disso, a R$ {PTM}, sob consulta de disponibilidade. Uma carga de {CARGA} de silagem de milho custa de R$ {PC1} a R$ {PC2} na estância, mais o frete. <a href=\"/carga-de-silagem/\">Veja quanto custa a carga fechada</a>."),
     ("Como é calculado o frete da entrega?",
-     f"Pela distância até a sua propriedade e pelo tamanho da carga. Mande pelo WhatsApp a cidade, a localidade e a quantidade, e respondemos com o valor. O preço do produto não muda: R$ {PT} a tonelada de silagem e R$ {PB} a bola de pré-secado."),
+     f"Pela distância até a sua propriedade e pelo tamanho da carga. Mande pelo WhatsApp a cidade, a localidade e a quantidade, e respondemos com o valor. O preço na estância é o mesmo para qualquer cidade: {PRECO_REGRA}; R$ {PB} a bola de pré-secado."),
     ("Vocês entregam no Rio Grande do Sul?",
      f"Sim, nos municípios gaúchos a até {EMAX} km de estrada, como {ex_rs[0]['nome']}, {ex_rs[1]['nome']} e {ex_rs[2]['nome']}. Eles ficam do outro lado do rio Uruguai, então a estrada é bem mais longa que a linha reta: {ex_rs[0]['nome']} está a {br(ex_rs[0]['reta_km'], 1)} km em linha reta e cerca de {ex_rs[0]['estrada_km']} km de estrada."),
     (f"E quem está a mais de {EMAX} km de estrada?",
@@ -1154,7 +1165,7 @@ reg = f"""
 <div class="txt">
 <p class="migalha"><a href="/">Início</a> › Entrega e região</p>
 <h1>Entrega de silagem e pré-secado até {EMAX} km de estrada de {CID}</h1>
-<p class="sub">A {NOME} entrega silagem de milho e pré-secado de azevém em {N_ENT} municípios do Oeste e do Meio-Oeste de Santa Catarina e do Norte do Rio Grande do Sul, {ALC} da estância, em {LOCAL}. {REGRA_ENTREGA} O frete é orçado pelo WhatsApp. Quem preferir retira na estância.</p>
+<p class="sub">A {NOME} entrega silagem de milho e pré-secado de azevém em {N_ENT} municípios do Oeste e do Meio-Oeste de Santa Catarina e do Norte do Rio Grande do Sul, {ALC} da estância, em {LOCAL}. O pedido ideal é a carga fechada de {CARGA} num caminhão. O frete é orçado pelo WhatsApp. Quem preferir retira na estância.</p>
 <div class="acoes">{wa(msg_reg, "heroi-regiao", "Pedir orçamento de entrega", "bt claro")}<a class="bt linha" href="{F['perfil_google']}" rel="noopener">Abrir no Google Maps</a></div>
 </div>
 <figure>{img("silos-vista-vale", f"Silos trincheira cobertos na {NOME}, com pasto e mata ao fundo, em {LOCAL}", lazy=False)}<figcaption>Foto real · {LOCAL}, novembro de 2026</figcaption></figure>
@@ -1231,14 +1242,14 @@ for i, z in enumerate(sorted(PAGS, key=lambda z: z["estrada_km"])):
     URLS_CID.append(cam)
     nm, nu = z["nome"], nome_uf(z)
     viz_pag = sorted([w for w in PAGS if w is not z], key=lambda w: dist(z, w))[:3]
-    viz_out = sorted([w for w in MUNS if w is not z and not w.get("slug")], key=lambda w: dist(z, w))[:4]
+    viz_out = sorted([w for w in MUNS_E if w is not z and not w.get("slug")], key=lambda w: dist(z, w))[:4]
     foto = FOTOS_CID[i % len(FOTOS_CID)]
     msg = f"Olá! Sou de {nm} ({z['uf']}) e quero um orçamento de entrega de ___ (silagem de milho ou pré-secado)."
     leite = milhoes_litros(z["leite_mil_litros"])
     rk = RANK[nm]
     FAQ_C, LD_C = faq([
         (f"Vocês entregam silagem em {nm}?",
-         f"Sim. {nu} fica a cerca de {z['estrada_km']} km de estrada de {LOCAL}, dentro da área em que a {NOME} entrega ({ALC}). O frete é orçado pelo WhatsApp conforme a quantidade e o endereço da propriedade."),
+         f"Sim. {nu} fica a cerca de {z['estrada_km']} km de estrada de {LOCAL}, dentro da área em que a {NOME} entrega, até cerca de {EMAX} km de estrada. O frete é orçado pelo WhatsApp conforme a quantidade e o endereço da propriedade."),
         (f"Qual a distância de {CID} até {nm}?",
          f"{br(z['reta_km'], 1)} km em linha reta entre as sedes e cerca de {z['estrada_km']} km pela estrada, perto de {tempo(z['estrada_min'])} de carro. Até a sua propriedade, a distância pode ser maior ou menor."),
         (f"Quanto custa a silagem de milho entregue em {nm}?",
@@ -1299,11 +1310,11 @@ for i, z in enumerate(sorted(PAGS, key=lambda z: z["estrada_km"])):
                "areaServed": {"@type": "City", "name": f"{nm}, {z['uf']}",
                               "geo": {"@type": "GeoCoordinates", "latitude": z["lat"], "longitude": z["lon"]},
                               "containedInPlace": {"@type": "State", "name": ESTADO[z["uf"]]}},
-               "offers": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL"},
+               "offers": [{"@type": "Offer", "itemOffered": {"@id": f"{DOM}/silagem-de-milho/#produto"}, "price": S["preco_tonelada"], "priceCurrency": "BRL", "priceSpecification": SPEC_SIL},
                           {"@type": "Offer", "itemOffered": {"@id": f"{DOM}/pre-secado-de-azevem/#produto"}, "price": P["preco_bola"], "priceCurrency": "BRL"}]}
     titulo = f"Silagem de milho com entrega em {nu}"
     pagina(cam, titulo + (" | Estância Safra" if len(titulo) < 44 else ""),
-           f"Silagem de milho a R$ {PT}/t e pré-secado a R$ {PB}/bola com entrega em {nu}, a cerca de {z['estrada_km']} km de {CID}. Frete orçado no WhatsApp.",
+           f"Silagem de milho a R$ {PT}/t (8 t ou mais) e pré-secado a R$ {PB}/bola com entrega em {nu}, a cerca de {z['estrada_km']} km de {CID}. Frete orçado no WhatsApp.",
            corpo, [NEGOCIO, servico, LD_C, migalha3(nm, cam)], msg, f"Entrega em {nm}", extra={"citation": CIT_CID})
 
 # ---------------------------------------------------------------- CONTATO
@@ -1452,6 +1463,8 @@ QA_LLMS = [
     ("A silagem é a granel ou ensacada?", "A granel, carregada da face do silo trincheira direto no caminhão."),
     ("Quanto tempo a silagem aguenta depois de entregue?", "Deve ser fornecida em até 48 horas de exposição ao ar (Unoesc) ou reensilada no mesmo dia; reensilar depois de 36 horas reduziu o valor nutritivo (Pesquisa Agropecuária Brasileira, 2018)."),
     ("Tem análise bromatológica?", "Em andamento. Nenhum valor de composição é informado antes do laudo."),
+    ("Quanto de silagem uma vaca come por dia?", "Para planejar, a Embrapa usa 30 kg de silagem por vaca por dia (Embrapa Acre, 2015); outra publicação da Embrapa fala em 25 a 35 kg por animal adulto, conforme raça e produção (Embrapa Amazônia Oriental, 2004). Uma carga de 10 t dura cerca de 7 dias para 50 vacas a 30 kg."),
+    ("Como reensilar a silagem comprada?", "No mesmo dia da entrega: camadas de no máximo 20 cm bem compactadas e lona de pelo menos 200 micras com pesos por cima, como a Embrapa recomenda para a ensilagem (Comunicado Técnico 114, 2017)."),
     ("Quanto custa o pré-secado de azevém?", f"R$ {PB} a bola de cerca de {KG} kg ({KMIN} a {KMAX} kg), ou R$ {PKG_MIN} a R$ {PKG_MAX} por kg."),
     ("Dá para retirar na propriedade?", f"Sim, em {LOCAL}, em dia e horário combinados, com o seu caminhão ou freteiro. Na retirada não há frete."),
 ]
