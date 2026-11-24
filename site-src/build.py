@@ -1125,7 +1125,14 @@ def fonte_cid(k):
 NOTA_CID = (f'<p class="nota">Distâncias entre as sedes dos municípios: linha reta pelas coordenadas do IBGE; estrada e tempo de carro '
             f'calculados com {fonte_cid("rotas")}, aproximados. Rebanho e leite: {fonte_cid("ppm_vacas")} e {fonte_cid("ppm_leite")}. '
             f'Conferido em <time datetime="{CONF_CID}">{data_br(CONF_CID)}</time>.</p>')
-CIT_CID = [{"@type": "Dataset", "name": FONTES_CID[k][0], "url": FONTES_CID[k][1]} for k in ("ppm_vacas", "ppm_leite")]
+# Google exige name e description (50+ caracteres) em todo Dataset; sem description a inspeção marca "itens inválidos".
+DESC_CID = {"ppm_vacas": "Número de vacas ordenhadas por município",
+            "ppm_leite": "Produção de leite de vaca por município"}
+CIT_CID = [{"@type": "Dataset", "name": FONTES_CID[k][0], "url": FONTES_CID[k][1],
+            "description": f"{DESC_CID[k]}, da Pesquisa da Pecuária Municipal (PPM) do IBGE, ano de referência {PPM_ANO}, publicada no SIDRA.",
+            "creator": {"@type": "Organization", "name": "Instituto Brasileiro de Geografia e Estatística (IBGE)", "url": "https://www.ibge.gov.br/"},
+            "temporalCoverage": str(PPM_ANO), "spatialCoverage": "Brasil, por município"}
+           for k in ("ppm_vacas", "ppm_leite")]
 
 
 def migalha3(rotulo, caminho):
